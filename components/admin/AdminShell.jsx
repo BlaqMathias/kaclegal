@@ -1,0 +1,73 @@
+import Link from 'next/link';
+import LogoutButton from '@/components/admin/LogoutButton';
+
+/**
+ * AdminShell — chrome for authenticated admin pages.
+ *
+ * A slim top bar with the brand wordmark, the signed-in email and a sign-out
+ * button, plus a page header. Kept visually plainer than the public site on
+ * purpose: this is a working tool, not a marketing surface.
+ *
+ * Only wrap pages that have already called `requireAdminPage()` — this component
+ * displays the session, it doesn't verify it.
+ *
+ * @param {object} props
+ * @param {string} props.email - Signed-in admin's email, shown in the top bar.
+ * @param {string} props.title - Page heading.
+ * @param {string} [props.description] - Optional sub-heading copy.
+ * @param {React.ReactNode} [props.actions] - Buttons/links rendered beside the heading.
+ * @param {React.ReactNode} props.children - Page content.
+ */
+export default function AdminShell({
+  email,
+  title,
+  description,
+  actions,
+  children,
+}) {
+  return (
+    <div className="min-h-screen bg-brand-offWhite">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="container-kac flex h-16 items-center justify-between gap-4">
+          <Link
+            href="/admin/publications"
+            className="leading-none"
+            aria-label="KAC admin — publications"
+          >
+            <span className="block font-display text-[15px] font-semibold text-brand-navy">
+              Koko Asuquo Chambers
+            </span>
+            <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-[0.28em] text-brand-teal">
+              Admin
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            {email && (
+              <span className="hidden text-caption text-brand-muted sm:inline">
+                {email}
+              </span>
+            )}
+            <LogoutButton />
+          </div>
+        </div>
+      </header>
+
+      <div className="container-kac py-10 md:py-14">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-h1 text-brand-navy">{title}</h1>
+            {description && (
+              <p className="mt-2 max-w-2xl text-body text-brand-muted">
+                {description}
+              </p>
+            )}
+          </div>
+          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        </div>
+
+        <div className="mt-8">{children}</div>
+      </div>
+    </div>
+  );
+}
