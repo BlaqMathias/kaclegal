@@ -1,7 +1,7 @@
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
 import Section from "@/components/ui/Section";
 import { practiceAreas } from "@/content/practice-areas";
+import Image from "next/image";
+import Link from "next/link";
 
 /**
  * PracticeAreaGrid — responsive grid of practice-area teaser cards
@@ -11,17 +11,28 @@ import { practiceAreas } from "@/content/practice-areas";
  * Data comes from the shared `/content/practice-areas` source — one source of
  * truth for the homepage teaser and any future hub page.
  *
- * `roundedCards` is homepage-only styling: rounded white cards (via `!`
- * overrides on Card's normally sharp `rounded-none`, the same override
- * pattern already used on Hero/AboutTeaser's buttons) and light text for the
- * navy panel it sits on. Every other usage keeps the site's normal sharp
- * corners untouched.
+ * Card style: image-forward "selected work" treatment. The photo sits in its
+ * own bordered, rounded box; the title sits below it on the section's own
+ * background — not inside the image's box. The whole card (image + title) is
+ * the link; on hover the image zooms and rotates slightly.
+ *
+ * `roundedCards` is homepage-only styling: rounded image box + light title
+ * text for the navy panel it sits on. Every other usage keeps the site's
+ * normal sharp corners (rounded-none) untouched.
  *
  * @param {object} props
  * @param {boolean} [props.showIntro=true] - Render the eyebrow/heading/description block above the grid.
- * @param {'white'|'offWhite'|'navy'|'navyPanel'|'navyDarkPanel'} [props.background='offWhite'] - Section background. Defaults to the light/grey panel option.
+ * @param {'white'|'offWhite'|'navy'|'navyPanel'|'navyDarkPanel'} [props.background='offWhite'] - Section background.
  * @param {boolean} [props.roundedCards=false] - Homepage-only rounded-card, light-text styling.
  */
+
+/** Accent border cycles through these brand colors, one per card in order. */
+const BORDER_COLORS = [
+  "border-brand-teal",
+  "border-brand-navy",
+  "border-brand-navyDark",
+];
+
 export default function PracticeAreaGrid({
   showIntro = true,
   background = "offWhite",
@@ -29,7 +40,8 @@ export default function PracticeAreaGrid({
 }) {
   const headingColor = roundedCards ? "text-white" : "text-brand-navy";
   const bodyColor = roundedCards ? "text-white/70" : "text-brand-muted";
-  const cardClasses = roundedCards ? "!rounded-2xl" : "";
+  const titleColor = roundedCards ? "text-white" : "text-brand-navy";
+  const cornerClass = roundedCards ? "rounded-3xl" : "rounded-none";
 
   return (
     <Section background={background} spacing="md">
@@ -38,9 +50,7 @@ export default function PracticeAreaGrid({
           <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
             Our Practice Areas
           </p>
-          <h2
-            className={`mt-3 font-display text-h2 font-bold ${headingColor}`}
-          >
+          <h2 className={`mt-3 font-display text-h2 font-bold ${headingColor}`}>
             Everything a Growing Business Needs in One Place
           </h2>
           <p className={`mt-4 text-body ${bodyColor}`}>
@@ -51,44 +61,37 @@ export default function PracticeAreaGrid({
       )}
 
       <div
-        className={`${showIntro ? "mt-10 " : ""}grid gap-6 sm:grid-cols-2 lg:grid-cols-3`}
+        className={`${showIntro ? "mt-10 " : ""}grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3`}
       >
-        {practiceAreas.map((area) => (
-          <Card
-            key={area.slug}
-            image={`/images/practice-areas/${area.slug}.webp`}
-            imageAlt={area.title}
-            className={cardClasses}
-          >
-            <h3 className="font-display text-h3 text-brand-navy">
-              {area.title}
-            </h3>
-            <p className="mt-3 text-body text-brand-muted">{area.summary}</p>
-            <Button
+        {practiceAreas.map((area, index) => {
+          const borderColor = BORDER_COLORS[index % BORDER_COLORS.length];
+
+          return (
+            <Link
+              key={area.slug}
               href={`/practice-areas/${area.slug}`}
-              size="sm"
-              className="mt-5 !flex !w-full !items-center !justify-center !gap-2 !rounded-full"
+              className="group block"
             >
-              <span>Learn more</span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-                className="shrink-0"
+              {/* Image box — border, corner treatment, and hover zoom/rotate live here only */}
+              <div
+                className={`relative aspect-[4/3] w-full overflow-hidden border-2 shadow-card transition-shadow duration-300 group-hover:shadow-card-hover ${cornerClass} ${borderColor}`}
               >
-                <path
-                  d="M3.5 8h9M8.5 3.5 13 8l-4.5 4.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <Image
+                  src={`/images/practice-areas/${area.slug}.webp`}
+                  alt={area.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-2"
                 />
-              </svg>
-            </Button>
-          </Card>
-        ))}
+              </div>
+
+              {/* Title — sits on the section's own background, below the image box */}
+              <h3 className={`mt-4 font-display text-h4 ${titleColor}`}>
+                {area.title}
+              </h3>
+            </Link>
+          );
+        })}
       </div>
     </Section>
   );

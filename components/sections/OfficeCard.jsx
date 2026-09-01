@@ -1,4 +1,4 @@
-import Card from '@/components/ui/Card';
+import Card from "@/components/ui/Card";
 
 /**
  * Build a Google Maps "search" URL for an address. Uses the public Maps URL
@@ -46,10 +46,10 @@ function Icon({ children }) {
 export default function OfficeCard({ office }) {
   const { name, address, email, phone } = office;
   // tel: links must be digits/plus only — strip spaces and punctuation.
-  const telHref = `tel:${phone.replace(/[^\d+]/g, '')}`;
+  const telHref = `tel:${phone.replace(/[^\d+]/g, "")}`;
 
   return (
-    <Card>
+    <Card className="!rounded-3xl">
       <h3 className="font-display text-h4 text-brand-navy">{name}</h3>
 
       <ul className="mt-4 space-y-3 text-body text-brand-slate">
@@ -94,7 +94,16 @@ export default function OfficeCard({ office }) {
         className="mt-5 inline-flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.12em] text-brand-teal transition-colors hover:text-brand-navy"
       >
         Get Directions
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <path d="M7 17 17 7" />
           <path d="M7 7h10v10" />
         </svg>

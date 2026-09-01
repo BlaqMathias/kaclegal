@@ -27,7 +27,7 @@ export default function Hero() {
 
       <div className="container-kac relative z-10 pb-0 pt-5 text-center md:pt-10">
         <div className="mx-auto max-w-6xl">
-          <span className="inline-flex items-center rounded-full border border-brand-navy/15 px-4 py-1.5 text-caption font-medium text-brand-slate shadow-card">
+          <span className="inline-flex items-center rounded-full border border-brand-navy/15 px-4 py-1.5 text-caption font-medium text-brand-slate shadow-card bg-white">
             Commercial Law · Lagos &amp; Uyo
           </span>
 
@@ -39,10 +39,10 @@ export default function Hero() {
             </span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-3xl text-body-lg text-brand-navy">
+          <p className="mx-auto mt-5 max-w-3xl text-body text-brand-navy">
             With modern technical expertise, Koko Asuquo Chambers helps
-            businesses in Lagos and Uyo get legally competitive — so you can
-            focus on winning the market.
+            businesses get legally competitive — so you can focus on winning the
+            market.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
@@ -54,7 +54,7 @@ export default function Hero() {
               href="/about"
               variant="secondary"
               size="lg"
-              className="!rounded-full !border-brand-navy !text-brand-navy hover:!bg-brand-navy hover:!text-white"
+              className="!rounded-full !border-brand-navy !text-brand-navy hover:!bg-brand-teal hover:!border-brand-teal hover:!text-white"
             >
               About Us
             </Button>

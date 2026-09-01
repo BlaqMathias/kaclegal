@@ -70,9 +70,24 @@ module.exports = {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        // Slow, wandering drift for decorative background glows — used behind
+        // "What We Stand For" so the panel feels alive without distracting
+        // from the text sitting on top of it.
+        blobDriftA: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(6%, -8%) scale(1.12)" },
+          "66%": { transform: "translate(-5%, 5%) scale(0.94)" },
+        },
+        blobDriftB: {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(-7%, 6%) scale(1.08)" },
+          "66%": { transform: "translate(5%, -6%) scale(0.92)" },
+        },
       },
       animation: {
         marquee: "marquee 40s linear infinite",
+        "blob-a": "blobDriftA 16s ease-in-out infinite",
+        "blob-b": "blobDriftB 20s ease-in-out infinite",
       },
     },
   },

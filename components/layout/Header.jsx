@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import Button from '@/components/ui/Button';
-import MobileNav from '@/components/layout/MobileNav';
-import { practiceAreas } from '@/content/practice-areas';
+import MobileNav from "@/components/layout/MobileNav";
+import Button from "@/components/ui/Button";
+import { practiceAreas } from "@/content/practice-areas";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 /** Practice-area links for the dropdown — derived from the single content source. */
 const PRACTICE_AREA_LINKS = practiceAreas.map((area) => ({
@@ -20,12 +20,12 @@ const PRACTICE_AREA_LINKS = practiceAreas.map((area) => ({
  * are the individual practice-area detail pages.
  */
 const NAV_ITEMS = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Practice Areas', children: PRACTICE_AREA_LINKS },
-  { label: 'Team', href: '/team' },
-  { label: 'Publications', href: '/publications' },
-  { label: 'Contact', href: '/contact' },
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
+  { label: "Practice Areas", children: PRACTICE_AREA_LINKS },
+  { label: "Team", href: "/team" },
+  { label: "Publications", href: "/publications" },
+  { label: "Contact", href: "/contact" },
 ];
 
 /**
@@ -72,16 +72,17 @@ function NavDropdown({ label, items, active, pathname }) {
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') setIsOpen(false);
+      if (e.key === "Escape") setIsOpen(false);
     };
     const onDown = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(e.target))
+        setIsOpen(false);
     };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onDown);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
     return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
     };
   }, [isOpen]);
 
@@ -107,12 +108,12 @@ function NavDropdown({ label, items, active, pathname }) {
         aria-expanded={isOpen}
         onClick={() => setIsOpen((v) => !v)}
         className={`inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-brand-teal ${
-          active ? 'text-brand-navy' : 'text-brand-slate'
+          active ? "text-brand-navy" : "text-brand-slate"
         }`}
       >
         {label}
         <svg
-          className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           viewBox="0 0 24 24"
           fill="none"
           aria-hidden="true"
@@ -130,7 +131,9 @@ function NavDropdown({ label, items, active, pathname }) {
       {/* Panel. `pt-3` is an invisible bridge so hover survives the gap. */}
       <div
         className={`absolute left-1/2 top-full z-50 w-[30rem] max-w-[90vw] -translate-x-1/2 pt-3 transition duration-150 ${
-          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-1 opacity-0'
+          isOpen
+            ? "visible translate-y-0 opacity-100"
+            : "invisible -translate-y-1 opacity-0"
         }`}
       >
         <div className="border border-slate-100 bg-white p-6 shadow-card">
@@ -142,7 +145,9 @@ function NavDropdown({ label, items, active, pathname }) {
               <Link
                 key={child.href}
                 href={child.href}
-                aria-current={pathname.startsWith(child.href) ? 'page' : undefined}
+                aria-current={
+                  pathname.startsWith(child.href) ? "page" : undefined
+                }
                 className="block py-2 text-sm font-medium text-brand-slate transition-colors hover:text-brand-teal"
               >
                 {child.label}
@@ -171,13 +176,17 @@ export default function Header() {
   }, [pathname]);
 
   const isActive = (href) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white">
       <div className="container-kac flex h-20 items-center justify-between gap-4">
         {/* Brand lockup: monogram + wordmark */}
-        <Link href="/" className="flex items-center gap-3" aria-label="Koko Asuquo Chambers — home">
+        <Link
+          href="/"
+          className="flex items-center gap-3"
+          aria-label="Koko Asuquo Chambers — home"
+        >
           <Image
             src="/images/logo/kac-monogram.png"
             alt=""
@@ -204,16 +213,18 @@ export default function Header() {
                 key={item.label}
                 label={item.label}
                 items={item.children}
-                active={item.children.some((child) => pathname.startsWith(child.href))}
+                active={item.children.some((child) =>
+                  pathname.startsWith(child.href),
+                )}
                 pathname={pathname}
               />
             ) : (
               <Link
                 key={item.href}
                 href={item.href}
-                aria-current={isActive(item.href) ? 'page' : undefined}
+                aria-current={isActive(item.href) ? "page" : undefined}
                 className={`text-sm font-medium transition-colors hover:text-brand-teal ${
-                  isActive(item.href) ? 'text-brand-navy' : 'text-brand-slate'
+                  isActive(item.href) ? "text-brand-navy" : "text-brand-slate"
                 }`}
               >
                 {item.label}
@@ -224,7 +235,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2">
           <div className="hidden md:block">
-            <Button href="/contact" size="sm">
+            <Button href="/contact" size="sm" className="!rounded-full">
               Request a Consultation
             </Button>
           </div>
@@ -238,7 +249,12 @@ export default function Header() {
             aria-controls="mobile-nav"
             className="rounded-none p-2 text-brand-navy transition-colors hover:text-brand-teal md:hidden"
           >
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <path
                 d="M4 7h16M4 12h16M4 17h16"
                 stroke="currentColor"
@@ -251,7 +267,11 @@ export default function Header() {
       </div>
 
       <div id="mobile-nav">
-        <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} navItems={NAV_ITEMS} />
+        <MobileNav
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          navItems={NAV_ITEMS}
+        />
       </div>
     </header>
   );

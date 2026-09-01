@@ -1,65 +1,119 @@
-import Badge from '@/components/ui/Badge';
-import Card from '@/components/ui/Card';
-import { formatNaira } from '@/lib/publications';
+import Badge from "@/components/ui/Badge";
+import { formatDateUTC, formatNaira } from "@/lib/publications";
+import Link from "next/link";
 
 /**
  * PublicationCard — one item in the public publications grid.
  *
- * Free and paid items share the same card treatment on purpose: the library is
- * one shelf from one firm, not a free section next to a shop. The only
- * difference is the price chip and the wording of the call to action.
+ * Paid and free items diverge on purpose:
+ * - Paid items still have a detail page (`/publications/[slug]`), so the
+ *   whole card is a `Link` there and the pill reads "View to purchase". It's
+ *   a styled `<span>`, not a nested interactive element, since the card
+ *   itself is already the link.
+ * - Free items have no detail page at all — the pill IS the action: a real
+ *   `<a>` pointing straight at the signed-download route, so clicking "Read"
+ *   starts the download immediately. The rest of the card is a plain,
+ *   non-interactive `<div>`.
  *
- * The whole card links to the detail page; the action label reads as a button
- * but is styled text, so the card stays a single link target rather than nesting
- * an interactive element inside another.
- *
- * `!flex` on the root is deliberate: in link mode `Card` appends `block` after
- * the incoming className, so the display utility needs the extra weight for
- * equal-height cards to work.
+ * The pill is a rounded, content-width button that floats in the card body
+ * (not edge-to-edge); the publish date sits in its own light footer band
+ * below, always pinned to the card's bottom edge via `mt-auto` so cards of
+ * differing description length still line up.
  *
  * @param {object} props
- * @param {{slug: string, title: string, type: string, description: string|null, is_paid: boolean, price_naira: number|null}} props.publication - A published publication row.
+ * @param {{slug: string, title: string, type: string, description: string|null, is_paid: boolean, price_naira: number|null, created_at?: string}} props.publication - A published publication row.
  */
 export default function PublicationCard({ publication }) {
-  const { slug, title, type, description, is_paid: isPaid, price_naira: price } =
-    publication;
+  const {
+    slug,
+    title,
+    type,
+    description,
+    is_paid: isPaid,
+    price_naira: price,
+    created_at: createdAt,
+  } = publication;
 
-  return (
-    <Card
-      href={`/publications/${slug}`}
-      hover
-      className="!flex h-full flex-col [&>div]:flex [&>div]:flex-1 [&>div]:flex-col"
+  const arrow = (
+    <svg
+      className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
     >
+      <path
+        d="M5 12h14M13 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+
+  const body = (
+    <div className="flex-1 p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="navy">{type}</Badge>
-        <Badge variant={isPaid ? 'muted' : 'teal'}>
-          {isPaid ? formatNaira(price) : 'Free'}
+        <Badge variant={isPaid ? "muted" : "teal"}>
+          {isPaid ? formatNaira(price) : "Free"}
         </Badge>
       </div>
 
-      <h3 className="mt-4 text-h4 text-brand-navy">{title}</h3>
+      <h3 className="mt-4 text-h4 font-bold text-brand-navy">{title}</h3>
 
       {description && (
-        <p className="mt-3 line-clamp-4 text-body text-brand-muted">{description}</p>
+        <p className="mt-3 line-clamp-4 text-body text-brand-muted">
+          {description}
+        </p>
       )}
 
-      <span className="mt-auto flex items-center gap-2 pt-6 text-caption font-semibold uppercase tracking-[0.16em] text-brand-teal">
-        {isPaid ? 'View details' : 'Read'}
-        <svg
-          className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M5 12h14M13 6l6 6-6 6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-    </Card>
+      <div className="mt-5">
+        {isPaid ? (
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-navyDark px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 group-hover:bg-brand-navy">
+            View to purchase
+            {arrow}
+          </span>
+        ) : (
+          // A native anchor, not <Link>: free items have no detail page, so
+          // this pill is the entire action — it hits the signed-download
+          // route directly and must not be intercepted by client routing.
+          <a
+            href={`/api/publications/${slug}/read`}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-navy px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-navyDark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2"
+          >
+            Read
+            {arrow}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+
+  const dateBand = (
+    <div className="mt-auto border-t border-slate-100 bg-brand-offWhite px-6 py-3">
+      <p className="text-caption text-brand-muted">
+        {formatDateUTC(createdAt)}
+      </p>
+    </div>
+  );
+
+  if (isPaid) {
+    return (
+      <Link
+        href={`/publications/${slug}`}
+        className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-hover"
+      >
+        {body}
+        {dateBand}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+      {body}
+      {dateBand}
+    </div>
   );
 }

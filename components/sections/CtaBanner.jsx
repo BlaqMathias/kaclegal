@@ -1,5 +1,5 @@
-import Button from '@/components/ui/Button';
-import Section from '@/components/ui/Section';
+import Button from "@/components/ui/Button";
+import Section from "@/components/ui/Section";
 
 /**
  * CtaBanner — the final conversion push before the footer. Full-width navy
@@ -23,22 +23,26 @@ import Section from '@/components/ui/Section';
 export default function CtaBanner({ practiceArea = null }) {
   const href = practiceArea
     ? `/contact?practiceArea=${encodeURIComponent(practiceArea.slug)}`
-    : '/contact';
+    : "/contact";
 
   const body = practiceArea
     ? `Tell us about your ${practiceArea.title} matter and we will help you find the right way forward.`
-    : 'Tell us about your business or matter and we will help you find the right way forward.';
+    : "Tell us about your business or matter and we will help you find the right way forward.";
 
   return (
     <Section background="navy" spacing="md">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="font-display text-h2">Let&rsquo;s talk about what&rsquo;s next.</h2>
-        <p className="mx-auto mt-4 max-w-xl text-body-lg text-white/80">{body}</p>
+        <h2 className="font-display text-h2">
+          Let&rsquo;s talk about what&rsquo;s next.
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-body-lg text-white/80">
+          {body}
+        </p>
         <div className="mt-8 flex justify-center">
           <Button
             href={href}
             size="lg"
-            className="!bg-white !text-brand-navy hover:!bg-brand-offWhite focus-visible:!ring-white focus-visible:!ring-offset-brand-navy"
+            className="!rounded-full !bg-white !text-brand-navy hover:!bg-brand-offWhite focus-visible:!ring-white focus-visible:!ring-offset-brand-navy"
           >
             Request a Consultation
           </Button>

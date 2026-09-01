@@ -3,16 +3,34 @@ import Image from "next/image";
 
 export default function RiskComparison() {
   return (
-    <Section background="ice">
-      <div className="flex flex-col items-center gap-10 md:flex-row md:gap-14">
-        <div className="order-2 w-full md:order-1 md:w-1/2">
+    <Section background="white" className="relative overflow-hidden">
+      {/* Decorative blue flowing glows + faint net grid, behind the content */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute -left-24 top-0 h-[360px] w-[360px] animate-pulse rounded-full bg-brand-teal/15 blur-[110px] [animation-duration:7s]" />
+        <div className="absolute -right-16 bottom-0 h-[300px] w-[300px] animate-pulse rounded-full bg-brand-navy/15 blur-[100px] [animation-duration:9s]" />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(4,80,159,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(4,80,159,0.06) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 70% 60% at 50% 50%, black 0%, transparent 80%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 70% 60% at 50% 50%, black 0%, transparent 80%)",
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center gap-10 md:flex-row md:gap-14">
+        <div className="group order-2 w-full md:order-1 md:w-1/2">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
             <Image
               src="/images/sections/legal-risk.webp"
               alt="A business owner checking his phone, uncertain about a decision"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-2"
             />
           </div>
         </div>

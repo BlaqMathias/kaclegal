@@ -1,5 +1,4 @@
 import CtaBanner from "@/components/sections/CtaBanner";
-import Card from "@/components/ui/Card";
 import Section from "@/components/ui/Section";
 import {
   getPracticeArea,
@@ -35,8 +34,17 @@ export function generateMetadata({ params }) {
 
 /**
  * Practice-area detail template — one shared component rendering all six areas
- * from their content files. Layout: header banner (title + summary), intro
- * paragraph, sub-services as a card list, and a closing CTA.
+ * from their content files.
+ *
+ * Layout:
+ * 1. Heading banner — white, on the same net-line grid + drifting glow used
+ *    elsewhere on the site (no photo; title + summary only).
+ * 2. Overview — dark split panel: the practice-area photo in a gradient frame
+ *    on one side, the intro paragraph on the other.
+ * 3. How We Help — sub-services laid out as an alternating timeline connected
+ *    by a center line, echoing thekreativestack.com/our-story's journey
+ *    section.
+ * 4. Closing CTA banner.
  *
  * An unmatched slug renders the shared not-found.jsx via notFound().
  *
@@ -53,60 +61,205 @@ export default function PracticeAreaDetailPage({ params }) {
 
   return (
     <>
-      <section className="relative flex min-h-[42vh] items-center overflow-hidden bg-brand-navy">
-        {/* Practice-area photo — the same image as the homepage card (decorative). */}
-        <Image
-          src={`/images/practice-areas/${area.slug}.webp`}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        {/* Deep navy gradient "coat" so the white text pops over any photo. */}
+      {/* ---------------------------------------------------------------- */}
+      {/* Heading — white, net-line grid + slow drifting glow (no photo).   */}
+      {/* ---------------------------------------------------------------- */}
+      <section className="relative overflow-hidden bg-white">
         <div
-          className="absolute inset-0 bg-gradient-to-br from-brand-navyDark/100 via-brand-navy/55 to-brand-navy/45"
           aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(4,80,159,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(4,80,159,0.08) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 70% 65% at 20% 30%, black 0%, transparent 75%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 70% 65% at 20% 30%, black 0%, transparent 75%)",
+          }}
         />
-        <div className="container-kac relative z-10 py-16 md:py-24">
-          <div className="max-w-3xl">
-            <p className="text-caption font-semibold uppercase tracking-[0.22em] text-white/70">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        >
+          <div className="absolute -left-16 top-0 h-[320px] w-[320px] animate-blob-a rounded-full bg-brand-teal/15 blur-[110px]" />
+          <div
+            className="absolute right-0 top-1/3 h-[280px] w-[280px] animate-blob-b rounded-full bg-brand-navy/10 blur-[100px]"
+            style={{ animationDelay: "3s" }}
+          />
+        </div>
+
+        <div className="container-kac relative z-10 py-10 md:py-14">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               Practice Area
             </p>
-            <h1 className="mt-3 font-display text-hero text-white">{title}</h1>
-            <p className="mt-5 text-body-lg text-white/85">{summary}</p>
+            <h1 className="mt-3 font-display text-hero text-brand-navy">
+              {title}
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
+              {summary}
+            </p>
           </div>
         </div>
       </section>
 
-      <Section background="white" spacing="md">
-        <div className="max-w-3xl">
-          <p className="text-body-lg text-brand-slate">{intro}</p>
+      {/* ---------------------------------------------------------------- */}
+      {/* Overview — framed photo (rotate + zoom on hover) + intro copy,    */}
+      {/* on a dark panel with drifting glow behind it.                     */}
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        background="navyPanel"
+        spacing="lg"
+        container={false}
+        className="relative overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+        >
+          <div className="absolute -left-20 top-0 h-[340px] w-[340px] animate-blob-a rounded-full bg-brand-teal/20 blur-[120px]" />
+          <div
+            className="absolute right-[-8%] bottom-0 h-[300px] w-[300px] animate-blob-b rounded-full bg-brand-navyDark/50 blur-[110px]"
+            style={{ animationDelay: "2s" }}
+          />
         </div>
 
-        <div className="mt-12">
-          <h2 className="font-display text-h3 text-brand-navy">How we help</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            {subServices.map((service) => (
-              <Card
-                key={service.title}
-                padded={false}
-                className="flex flex-col [&>div]:flex [&>div]:flex-1 [&>div]:flex-col"
-              >
-                {/* Deep-navy heading band with white title. */}
-                <div className="bg-brand-navy px-6 py-5">
-                  <h3 className="text-h4 font-semibold text-white">
-                    {service.title}
-                  </h3>
-                </div>
-                {/* White body; teal seam echoes the brand's teal-divider motif. */}
-                <div className="flex-1 border-t-2 border-brand-teal px-6 py-6">
-                  <p className="text-body text-brand-slate">
-                    {service.description}
-                  </p>
-                </div>
-              </Card>
-            ))}
+        <div className="container-kac relative z-10">
+          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+            <div className="group mx-auto w-full max-w-md -rotate-2 rounded-[26px] bg-gradient-to-br from-brand-teal via-brand-navy to-brand-teal p-[3px] shadow-card-hover transition-transform duration-700 ease-out hover:rotate-0 hover:scale-[1.03] md:mx-0">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[23px] bg-brand-navyDark">
+                <Image
+                  src={`/images/practice-areas/${area.slug}.webp`}
+                  alt={title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 40vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+                Overview
+              </p>
+              <h2 className="mt-3 font-display text-h2 text-white">
+                What This Means For You
+              </h2>
+              <p className="mt-5 text-body-lg text-white/80">{intro}</p>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* How We Help — alternating timeline on the net-line grid + slow    */}
+      {/* drifting glow, center connector line.                            */}
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        background="navyDarkPanel"
+        spacing="lg"
+        container={false}
+        className="relative overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 75% 70% at 50% 40%, black 0%, transparent 75%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 75% 70% at 50% 40%, black 0%, transparent 75%)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        >
+          <div className="absolute left-1/4 top-0 h-[320px] w-[320px] animate-blob-a rounded-full bg-brand-teal/20 blur-[120px]" />
+          <div
+            className="absolute right-1/4 bottom-0 h-[300px] w-[300px] animate-blob-b rounded-full bg-brand-navy/50 blur-[110px]"
+            style={{ animationDelay: "5s" }}
+          />
+        </div>
+
+        <div className="container-kac relative z-10">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+              How We Help
+            </p>
+            <h2 className="mt-3 font-display text-h2 text-white">
+              {title}, Step By Step
+            </h2>
+          </div>
+
+          <div className="relative mx-auto mt-16 max-w-5xl">
+            {/* Center connector line — desktop only. */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-y-0 left-1/2 hidden w-[3px] -translate-x-1/2 bg-gradient-to-b from-transparent via-brand-teal to-transparent md:block"
+            />
+            {/* Small floating accent dots for a bit of life along the line. */}
+            <div
+              aria-hidden="true"
+              className="absolute left-1/2 top-1/4 hidden h-3 w-3 -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-teal to-brand-navy md:block"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute left-1/2 top-3/4 hidden h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-navy to-brand-teal md:block"
+            />
+
+            <div className="space-y-12 md:space-y-16">
+              {subServices.map((service, index) => {
+                const isLeft = index % 2 === 0;
+                const number = String(index + 1).padStart(2, "0");
+
+                const card = (
+                  <div
+                    className={`relative rounded-2xl border border-slate-100 bg-white p-6 shadow-card sm:p-7 ${
+                      isLeft ? "md:text-right" : ""
+                    }`}
+                  >
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-navy font-display text-caption font-semibold text-white">
+                      {number}
+                    </span>
+                    <h3 className="mt-4 font-display text-h4 font-bold text-brand-navy">
+                      {service.title}
+                    </h3>
+                    <p className="mt-2 text-body text-brand-slate">
+                      {service.description}
+                    </p>
+                  </div>
+                );
+
+                return (
+                  <div
+                    key={service.title}
+                    className="relative grid gap-6 md:grid-cols-2 md:gap-16"
+                  >
+                    {/* Row marker on the center line. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute left-1/2 top-8 hidden h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white bg-brand-teal md:block"
+                    />
+                    {isLeft ? (
+                      <>
+                        {card}
+                        <div aria-hidden="true" />
+                      </>
+                    ) : (
+                      <>
+                        <div aria-hidden="true" />
+                        {card}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </Section>

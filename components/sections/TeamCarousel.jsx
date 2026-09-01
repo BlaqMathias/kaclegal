@@ -79,7 +79,7 @@ export default function TeamCarousel() {
   }
 
   return (
-    <Section background="teal" spacing="lg">
+    <Section background="navy" spacing="lg" className="overflow-hidden">
       <div className="flex flex-col items-center gap-10 md:flex-row md:gap-14">
         <div className="text-center md:w-2/5 md:text-left">
           <h2 className="font-display text-h1 text-white font-bold">
@@ -94,7 +94,7 @@ export default function TeamCarousel() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:justify-start">
             <Button
               href="/team"
-              className="!rounded-full !bg-brand-navy !text-white hover:!bg-brand-navyDark"
+              className="!rounded-full !bg-brand-navyDark !text-white hover:!bg-white hover:!text-brand-navyDark"
             >
               Meet the Team
             </Button>
@@ -155,21 +155,6 @@ export default function TeamCarousel() {
                 </button>
               );
             })}
-          </div>
-
-          <div className="mt-6 flex justify-center gap-2">
-            {team.map((member, index) => (
-              <button
-                key={member.slug}
-                type="button"
-                onClick={() => handleManualNavigate(index)}
-                aria-label={`Show ${member.name}`}
-                aria-current={index === currentIndex}
-                className={`h-2 w-2 rounded-full transition-colors duration-200 ${
-                  index === currentIndex ? "bg-white" : "bg-white/30"
-                }`}
-              />
-            ))}
           </div>
         </div>
       </div>

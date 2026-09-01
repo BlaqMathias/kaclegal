@@ -1,5 +1,7 @@
-import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import HoverImage from "@/components/ui/HoverImage";
 import Section from "@/components/ui/Section";
+import Image from "next/image";
 
 export const metadata = {
   title: "About the Firm",
@@ -54,70 +56,197 @@ const pullQuote =
 export default function AboutPage() {
   return (
     <>
-      <Section background="offWhite" spacing="lg">
-        <div className="max-w-3xl">
-          <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
-            About the Firm
-          </p>
-          <h1 className="mt-3 font-display text-hero text-brand-navy">
-            Koko Asuquo Chambers
-          </h1>
-          <p className="mt-5 text-body-lg text-brand-muted">
-            A modern commercial law firm pairing deep legal expertise with
-            technology — built to help businesses and individuals move forward
-            with clarity.
-          </p>
+      {/* ---------------------------------------------------------------- */}
+      {/* Intro — centered, sitting on the same net-line grid + glow the    */}
+      {/* homepage hero uses, so the About page opens with a familiar feel. */}
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        background="white"
+        spacing="sm"
+        container={false}
+        className="relative overflow-hidden"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(4,80,159,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(4,80,159,0.08) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 65% 55% at 50% 30%, black 0%, transparent 75%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 65% 55% at 50% 30%, black 0%, transparent 75%)",
+          }}
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-0 hidden justify-center sm:flex">
+          <div className="mt-4 h-[320px] w-[320px] rounded-full bg-brand-teal/20 blur-[100px] md:h-[420px] md:w-[420px]" />
+          <div className="absolute -right-10 top-24 h-[220px] w-[220px] rounded-full bg-brand-navy/15 blur-[90px]" />
+        </div>
+
+        <div className="container-kac relative z-10">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+              About the Firm
+            </p>
+            <h1 className="mt-3 font-display font-bold text-hero text-brand-navy">
+              What Do <span className="text-brand-navyDark"> We Do</span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
+              We pair commercial legal expertise with technology to help
+              businesses and individuals move forward with clarity.
+            </p>
+          </div>
         </div>
       </Section>
 
-      <Section background="navyPanel" spacing="md">
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="!shadow-2xl">
-            <h2 className="font-display text-h3 text-brand-navy">Our Vision</h2>
-            <p className="mt-4 text-body text-brand-slate">{vision}</p>
-          </Card>
-          <Card className="!shadow-2xl">
-            <h2 className="font-display text-h3 text-brand-navy">
-              Our Mission
-            </h2>
-            <p className="mt-4 text-body text-brand-slate">{mission}</p>
-          </Card>
-        </div>
-      </Section>
-
-      <Section background="navyDarkPanel" spacing="md">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
-            What We Stand For
-          </p>
-          <h2 className="mt-3 font-display text-h2 text-white">Our Values</h2>
-          <p className="mt-5 text-body-lg text-white/80">{values}</p>
-        </div>
-
-        <div className="mx-auto mt-14 grid max-w-5xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-          {firmValues.map((item) => (
-            <div key={item.title} className="border-l-2 border-brand-teal pl-5">
-              <h3 className="font-display text-h4 text-white">{item.title}</h3>
-              <p className="mt-2 text-body text-white/70">{item.description}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section background="white" spacing="md">
-        <div className="max-w-3xl">
-          <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
-            About Us
-          </p>
-          <h2 className="mt-3 font-display text-h2 text-brand-navy">
-            Who we are
-          </h2>
-          <div className="mt-6 space-y-5">
-            {aboutParagraphs.map((paragraph, index) => (
-              <p key={index} className="text-body text-brand-slate">
-                {paragraph}
+      {/* ---------------------------------------------------------------- */}
+      {/* Vision / Mission — split rows (text + image), alternating sides,  */}
+      {/* styled after thekreativestack.com/sme-solutions. Images tilt at   */}
+      {/* rest and settle + zoom in on hover.                               */}
+      {/* ---------------------------------------------------------------- */}
+      <Section background="navyDarkPanel" spacing="lg">
+        <div className="space-y-16 md:space-y-24">
+          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+            <HoverImage
+              src="/images/sections/vision.jpg"
+              tilt="left"
+              alt="Representative image for the firm's vision"
+            />
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+                Looking Ahead
               </p>
+              <h2 className="mt-3 font-display text-h2 text-white">
+                Our Vision
+              </h2>
+              <p className="mt-4 text-body text-white/75">{vision}</p>
+            </div>
+          </div>
+
+          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
+            <div className="order-2 md:order-1">
+              <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+                What Drives Us
+              </p>
+              <h2 className="mt-3 font-display text-h2 text-white">
+                Our Mission
+              </h2>
+              <p className="mt-4 text-body text-white/75">{mission}</p>
+            </div>
+            <div className="order-1 md:order-2">
+              <HoverImage
+                src="/images/sections/mission.jpg"
+                tilt="right"
+                alt="Representative image for the firm's mission"
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* What We Stand For — values, over a background photo with a navy   */}
+      {/* overlay for text contrast, plus slow drifting glow elements for   */}
+      {/* a bit of life on the dark panel.                                  */}
+      {/* ---------------------------------------------------------------- */}
+      <Section
+        background="navyDarkPanel"
+        spacing="md"
+        container={false}
+        className="relative overflow-hidden"
+      >
+        {/* Background image + navy scrim for text contrast */}
+        <div aria-hidden="true" className="absolute inset-0 z-0">
+          <Image
+            src="/images/sections/aboutgreek.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-brand-navyDark/85" />
+        </div>
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+        >
+          <div className="absolute -left-24 top-0 h-[380px] w-[380px] animate-blob-a rounded-full bg-brand-teal/25 blur-[120px]" />
+          <div className="absolute right-[-10%] top-1/3 h-[320px] w-[320px] animate-blob-b rounded-full bg-brand-navy/40 blur-[110px]" />
+          <div
+            className="absolute bottom-[-15%] left-1/3 h-[300px] w-[300px] animate-blob-a rounded-full bg-brand-teal/15 blur-[110px]"
+            style={{ animationDelay: "4s" }}
+          />
+        </div>
+
+        <div className="container-kac relative z-10">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+              What We Stand For
+            </p>
+            <h2 className="mt-3 font-display text-h2 text-white">Our Values</h2>
+            <p className="mt-5 text-body-lg text-white/80">{values}</p>
+          </div>
+
+          <div className="mx-auto mt-14 grid max-w-5xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+            {firmValues.map((item) => (
+              <div
+                key={item.title}
+                className="border-l-2 border-brand-teal pl-5"
+              >
+                <h3 className="font-display text-h4 text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-body text-white/70">
+                  {item.description}
+                </p>
+              </div>
             ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Who We Are — framed panel with a title bar and corner accents,    */}
+      {/* echoing the crs-motac.org "Welcome" panel treatment.              */}
+      {/* ---------------------------------------------------------------- */}
+      <Section background="offWhite" spacing="lg">
+        <p className="text-center text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+          About Us
+        </p>
+
+        <div className="mx-auto mt-6 max-w-5xl overflow-hidden rounded-3xl bg-brand-navyDark shadow-card-hover">
+          <div className="bg-brand-navy px-6 py-5 text-center sm:px-10">
+            <h2 className="font-display text-h3 text-white">Who We Are</h2>
+          </div>
+
+          <div className="relative px-6 py-12 sm:px-12 sm:py-14 md:px-16">
+            <span
+              aria-hidden="true"
+              className="absolute left-5 top-5 h-7 w-7 border-l-2 border-t-2 border-brand-teal sm:left-7 sm:top-7"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute bottom-5 right-5 h-7 w-7 border-b-2 border-r-2 border-brand-teal sm:bottom-7 sm:right-7"
+            />
+
+            <div className="mx-auto max-w-3xl space-y-5 text-center">
+              {aboutParagraphs.map((paragraph, index) => (
+                <p key={index} className="text-body text-white/80">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+
+            <div className="mt-9 flex justify-center">
+              <Button
+                href="/contact"
+                className="!rounded-full !bg-white !text-brand-navy hover:!bg-brand-offWhite focus-visible:!ring-white focus-visible:!ring-offset-brand-navyDark"
+              >
+                Request a Consultation
+              </Button>
+            </div>
           </div>
         </div>
       </Section>
