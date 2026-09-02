@@ -21,6 +21,8 @@ const PRACTICE_AREA_OPTIONS = [
   { value: "regulatory-compliance", label: "Regulatory Compliance" },
   { value: "intellectual-property", label: "Intellectual Property" },
   { value: "real-estate", label: "Real Estate" },
+  { value: "commercial-law", label: "Commercial Law" },
+  { value: "employment-labour-law", label: "Employment & Labour Law" },
   { value: "family-law", label: "Family Law" },
   { value: "general", label: "Not sure / General inquiry" },
 ];
@@ -302,6 +304,9 @@ export default function ConsultationForm() {
         >
           {isSubmitting ? "Sending…" : "Send Message"}
         </Button>
+        <p className="mt-3 text-caption text-brand-muted">
+          We typically respond within 1&ndash;2 business days.
+        </p>
       </div>
     </form>
   );

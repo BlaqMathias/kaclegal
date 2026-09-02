@@ -136,7 +136,7 @@ function NavDropdown({ label, items, active, pathname }) {
             : "invisible -translate-y-1 opacity-0"
         }`}
       >
-        <div className="border border-slate-100 bg-white p-6 shadow-card">
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-card">
           <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
             {label}
           </p>
@@ -179,7 +179,7 @@ export default function Header() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-100 bg-white">
+    <header className="sticky top-0 z-50 border-b-2 border-brand-navy bg-white">
       <div className="container-kac flex h-20 items-center justify-between gap-4">
         {/* Brand lockup: monogram + wordmark */}
         <Link

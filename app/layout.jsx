@@ -1,11 +1,47 @@
 import ChromeGate from "@/components/layout/ChromeGate";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
-import { Bricolage_Grotesque } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
+const bricolage = localFont({
+  src: [
+    {
+      path: "./fonts/BricolageGrotesque-ExtraLight.ttf",
+      weight: "200",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BricolageGrotesque-ExtraBold.ttf",
+      weight: "800",
+      style: "normal",
+    },
+  ],
   variable: "--font-bricolage",
   display: "swap",
 });

@@ -3,6 +3,8 @@ import OfficeCard from "@/components/sections/OfficeCard";
 import Section from "@/components/ui/Section";
 import Image from "next/image";
 import { Suspense } from "react";
+import Reveal from "@/components/motion/Reveal";
+import { RevealStagger, RevealItem } from "@/components/motion/RevealStagger";
 
 export const metadata = {
   title: "Contact",
@@ -74,19 +76,19 @@ export default function ContactPage() {
         </div>
 
         <div className="container-kac relative z-10 py-10 md:py-14">
-          <div className="mx-auto max-w-3xl text-center">
+          <Reveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
             <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               Contact
             </p>
             <h1 className="mt-3 font-display text-hero text-brand-navy">
               Get in <span className="text-brand-navyDark"> Touch</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
               Tell us about your business or the matter you need help with, and
               we&rsquo;ll point you to the right member of our team. Prefer to
               reach out directly? Our office details are below.
             </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -113,23 +115,29 @@ export default function ContactPage() {
 
         <div className="container-kac relative z-10">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div>
+            <Reveal variant="slideRight">
               <h2 className="font-display text-h2 text-white">
                 Let&rsquo;s Talk About Your Matter
               </h2>
-              <p className="mt-4 text-body text-white/80">
+              <p className="mt-4 text-body-lg text-white/80">
                 Whether you have a specific legal question or just need a
                 starting point, we&rsquo;re here to help you find clarity.
               </p>
 
-              <div className="mt-10 space-y-6">
+              <RevealStagger className="mt-10 space-y-6">
                 {OFFICES.map((office) => (
-                  <OfficeCard key={office.name} office={office} />
+                  <RevealItem key={office.name} variant="fadeUp">
+                    <OfficeCard office={office} />
+                  </RevealItem>
                 ))}
-              </div>
-            </div>
+              </RevealStagger>
+            </Reveal>
 
-            <div className="rounded-3xl bg-white p-6 shadow-card-hover sm:p-8 lg:p-10">
+            <Reveal
+              variant="slideLeft"
+              delay={0.1}
+              className="rounded-3xl bg-white p-6 shadow-card-hover sm:p-8 lg:p-10"
+            >
               <div className="mb-6 flex items-center gap-3">
                 <Image
                   src="/images/logo/kac-monogram.png"
@@ -166,7 +174,7 @@ export default function ContactPage() {
                   <ConsultationForm />
                 </Suspense>
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </Section>

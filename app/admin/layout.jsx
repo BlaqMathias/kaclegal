@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Admin',
+  title: "Admin",
   // The admin area must never appear in search results. `noindex, nofollow` is
   // inherited by every page nested under this layout, including the login form.
   robots: { index: false, follow: false, nocache: true },
@@ -18,5 +18,5 @@ export const metadata = {
  * @param {React.ReactNode} props.children - The active admin route.
  */
 export default function AdminLayout({ children }) {
-  return <div className="min-h-full bg-brand-offWhite">{children}</div>;
+  return <div className="min-h-full bg-brand-navyDark">{children}</div>;
 }

@@ -6,6 +6,7 @@ import {
 } from "@/content/practice-areas";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import Reveal from "@/components/motion/Reveal";
 
 /**
  * Pre-render one static page per known practice area at build time. Any slug not
@@ -90,7 +91,7 @@ export default function PracticeAreaDetailPage({ params }) {
         </div>
 
         <div className="container-kac relative z-10 py-10 md:py-14">
-          <div className="mx-auto max-w-3xl text-center">
+          <Reveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
             <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               Practice Area
             </p>
@@ -100,7 +101,7 @@ export default function PracticeAreaDetailPage({ params }) {
             <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
               {summary}
             </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -127,19 +128,21 @@ export default function PracticeAreaDetailPage({ params }) {
 
         <div className="container-kac relative z-10">
           <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-            <div className="group mx-auto w-full max-w-md -rotate-2 rounded-[26px] bg-gradient-to-br from-brand-teal via-brand-navy to-brand-teal p-[3px] shadow-card-hover transition-transform duration-700 ease-out hover:rotate-0 hover:scale-[1.03] md:mx-0">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[23px] bg-brand-navyDark">
-                <Image
-                  src={`/images/practice-areas/${area.slug}.webp`}
-                  alt={title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 40vw"
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                />
+            <Reveal variant="slideRight">
+              <div className="group mx-auto w-full max-w-md -rotate-2 rounded-[26px] bg-gradient-to-br from-brand-teal via-brand-navy to-brand-teal p-[3px] shadow-card-hover transition-transform duration-700 ease-out hover:rotate-0 hover:scale-[1.03] md:mx-0">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-[23px] bg-brand-navyDark">
+                  <Image
+                    src={`/images/practice-areas/${area.slug}.webp`}
+                    alt={title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 40vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                  />
+                </div>
               </div>
-            </div>
+            </Reveal>
 
-            <div>
+            <Reveal variant="slideLeft" delay={0.1}>
               <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
                 Overview
               </p>
@@ -147,7 +150,7 @@ export default function PracticeAreaDetailPage({ params }) {
                 What This Means For You
               </h2>
               <p className="mt-5 text-body-lg text-white/80">{intro}</p>
-            </div>
+            </Reveal>
           </div>
         </div>
       </Section>
@@ -187,14 +190,14 @@ export default function PracticeAreaDetailPage({ params }) {
         </div>
 
         <div className="container-kac relative z-10">
-          <div className="mx-auto max-w-2xl text-center">
+          <Reveal variant="fadeUp" className="mx-auto max-w-2xl text-center">
             <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               How We Help
             </p>
             <h2 className="mt-3 font-display text-h2 text-white">
               {title}, Step By Step
             </h2>
-          </div>
+          </Reveal>
 
           <div className="relative mx-auto mt-16 max-w-5xl">
             {/* Center connector line — desktop only. */}
@@ -218,21 +221,23 @@ export default function PracticeAreaDetailPage({ params }) {
                 const number = String(index + 1).padStart(2, "0");
 
                 const card = (
-                  <div
-                    className={`relative rounded-2xl border border-slate-100 bg-white p-6 shadow-card sm:p-7 ${
-                      isLeft ? "md:text-right" : ""
-                    }`}
-                  >
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-navy font-display text-caption font-semibold text-white">
-                      {number}
-                    </span>
-                    <h3 className="mt-4 font-display text-h4 font-bold text-brand-navy">
-                      {service.title}
-                    </h3>
-                    <p className="mt-2 text-body text-brand-slate">
-                      {service.description}
-                    </p>
-                  </div>
+                  <Reveal variant={isLeft ? "slideRight" : "slideLeft"}>
+                    <div
+                      className={`relative rounded-2xl border border-slate-100 bg-white p-6 shadow-card sm:p-7 ${
+                        isLeft ? "md:text-right" : ""
+                      }`}
+                    >
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-navy font-display text-caption font-semibold text-white">
+                        {number}
+                      </span>
+                      <h3 className="mt-4 font-display text-h4 font-bold text-brand-navy">
+                        {service.title}
+                      </h3>
+                      <p className="mt-2 text-body text-brand-slate">
+                        {service.description}
+                      </p>
+                    </div>
+                  </Reveal>
                 );
 
                 return (

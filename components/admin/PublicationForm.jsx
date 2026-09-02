@@ -1,23 +1,25 @@
-'use client';
+"use client";
 
-import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 import {
+  IMAGE_UPLOAD_ACCEPT,
+  MAX_IMAGE_UPLOAD_BYTES,
   MAX_UPLOAD_BYTES,
   PUBLICATION_STATUSES,
   PUBLICATION_TYPES,
   UPLOAD_ACCEPT,
   formatBytes,
   slugify,
-} from '@/lib/publications';
+} from "@/lib/publications";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 /** Wording for each status in the dropdown, keyed by the stored value. */
 const STATUS_LABELS = {
-  draft: 'Draft — hidden from the public site',
-  published: 'Published — visible to everyone',
+  draft: "Draft — hidden from the public site",
+  published: "Published — visible to everyone",
 };
 
 /**
@@ -32,21 +34,22 @@ const STATUS_LABELS = {
  */
 function textareaClasses(hasError) {
   return [
-    'w-full rounded-none border bg-white px-3.5 py-2.5 text-body text-brand-slate',
-    'placeholder:text-brand-muted transition-colors',
-    'focus:outline-none focus:ring-2 focus:ring-offset-0',
+    "w-full rounded-none border bg-white px-3.5 py-2.5 text-body text-brand-slate",
+    "placeholder:text-brand-muted transition-colors",
+    "focus:outline-none focus:ring-2 focus:ring-offset-0",
     hasError
-      ? 'border-brand-error focus:border-brand-error focus:ring-brand-error/40'
-      : 'border-slate-300 focus:border-brand-navy focus:ring-brand-navy/30',
-  ].join(' ');
+      ? "border-brand-error focus:border-brand-error focus:ring-brand-error/40"
+      : "border-slate-300 focus:border-brand-navy focus:ring-brand-navy/30",
+  ].join(" ");
 }
 
 /**
  * PublicationForm — shared create and edit form.
  *
- * Files upload as soon as they're chosen, not on submit, so a 25 MB PDF isn't
- * re-sent every time a validation error sends the admin back to the form. The
- * upload returns a storage path which is submitted as `file_path`.
+ * Files (and the cover image) upload as soon as they're chosen, not on submit,
+ * so a 25 MB PDF isn't re-sent every time a validation error sends the admin
+ * back to the form. Each upload returns a path submitted as `file_path` /
+ * `image_path` respectively.
  *
  * The URL slug is editable when creating and fixed when editing: once a
  * publication is live, changing its slug would break every link already shared.
@@ -55,35 +58,46 @@ function textareaClasses(hasError) {
  * @param {'create'|'edit'} [props.mode='create'] - Which operation this form performs.
  * @param {Record<string, any>|null} [props.publication=null] - Existing row, required for edit.
  */
-export default function PublicationForm({ mode = 'create', publication = null }) {
+export default function PublicationForm({
+  mode = "create",
+  publication = null,
+}) {
   const router = useRouter();
-  const isEdit = mode === 'edit';
+  const isEdit = mode === "edit";
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
 
-  const [title, setTitle] = useState(publication?.title ?? '');
-  const [slug, setSlug] = useState(publication?.slug ?? '');
+  const [title, setTitle] = useState(publication?.title ?? "");
+  const [slug, setSlug] = useState(publication?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(publication?.slug));
-  const [type, setType] = useState(publication?.type ?? '');
-  const [description, setDescription] = useState(publication?.description ?? '');
+  const [type, setType] = useState(publication?.type ?? "");
+  const [description, setDescription] = useState(
+    publication?.description ?? "",
+  );
   const [isPaid, setIsPaid] = useState(Boolean(publication?.is_paid));
   const [price, setPrice] = useState(
-    publication?.price_naira != null ? String(publication.price_naira) : '',
+    publication?.price_naira != null ? String(publication.price_naira) : "",
   );
-  const [status, setStatus] = useState(publication?.status ?? 'draft');
+  const [status, setStatus] = useState(publication?.status ?? "draft");
 
   // The file currently attached — either the one already saved on the row, or one
   // uploaded during this editing session.
   const [filePath, setFilePath] = useState(publication?.file_path ?? null);
-  const [fileLabel, setFileLabel] = useState('');
+  const [fileLabel, setFileLabel] = useState("");
   // Tracks paths uploaded in THIS session, so replacing one can clean it up. The
   // path already saved on the row is never in here: removing that file is the
   // update route's job, and only after the row has been updated successfully.
   const [sessionUploads, setSessionUploads] = useState([]);
 
+  // Same pattern as the file above, for the public cover image.
+  const [imagePath, setImagePath] = useState(publication?.image_path ?? null);
+  const [imageSessionUploads, setImageSessionUploads] = useState([]);
+
   const [uploading, setUploading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState("");
 
   const clearFieldError = (field) => {
     setFieldErrors((current) => {
@@ -97,11 +111,11 @@ export default function PublicationForm({ mode = 'create', publication = null })
   const handleTitleChange = (event) => {
     const value = event.target.value;
     setTitle(value);
-    clearFieldError('title');
+    clearFieldError("title");
     // Keep the slug in step with the title until the admin edits it by hand.
     if (!isEdit && !slugTouched) {
       setSlug(slugify(value));
-      clearFieldError('slug');
+      clearFieldError("slug");
     }
   };
 
@@ -114,12 +128,28 @@ export default function PublicationForm({ mode = 'create', publication = null })
     if (!path) return;
     try {
       await fetch(`/api/admin/upload?path=${encodeURIComponent(path)}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
     } catch (caught) {
       // Not worth surfacing: the row is unaffected and the file is in a private
       // bucket. Logged so it's visible if it ever happens often.
-      console.error('[admin] Could not discard replaced upload:', caught);
+      console.error("[admin] Could not discard replaced upload:", caught);
+    }
+  };
+
+  /**
+   * Same as `discardUpload`, for a cover image uploaded earlier in this session.
+   *
+   * @param {string} path - Public path returned by the upload-image route.
+   */
+  const discardImageUpload = async (path) => {
+    if (!path) return;
+    try {
+      await fetch(`/api/admin/upload-image?path=${encodeURIComponent(path)}`, {
+        method: "DELETE",
+      });
+    } catch (caught) {
+      console.error("[admin] Could not discard replaced image upload:", caught);
     }
   };
 
@@ -127,8 +157,8 @@ export default function PublicationForm({ mode = 'create', publication = null })
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setFormError('');
-    clearFieldError('file');
+    setFormError("");
+    clearFieldError("file");
 
     // Cheap client-side check so an oversized file isn't uploaded just to be
     // rejected. The server re-checks this — it is the check that counts.
@@ -139,32 +169,38 @@ export default function PublicationForm({ mode = 'create', publication = null })
           MAX_UPLOAD_BYTES,
         )}.`,
       }));
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     setUploading(true);
-    const previousSessionUpload = sessionUploads[sessionUploads.length - 1] ?? null;
+    const previousSessionUpload =
+      sessionUploads[sessionUploads.length - 1] ?? null;
 
     try {
       const body = new FormData();
-      body.append('file', file);
+      body.append("file", file);
 
-      const response = await fetch('/api/admin/upload', { method: 'POST', body });
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body,
+      });
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok || !payload.ok) {
         setFieldErrors((current) => ({
           ...current,
-          file: payload.error || 'Could not upload that file.',
+          file: payload.error || "Could not upload that file.",
         }));
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = "";
         setUploading(false);
         return;
       }
 
       setFilePath(payload.path);
-      setFileLabel(`${file.name} (${payload.sizeLabel || formatBytes(file.size)})`);
+      setFileLabel(
+        `${file.name} (${payload.sizeLabel || formatBytes(file.size)})`,
+      );
       setSessionUploads((current) => [...current, payload.path]);
       setUploading(false);
 
@@ -173,13 +209,78 @@ export default function PublicationForm({ mode = 'create', publication = null })
         discardUpload(previousSessionUpload);
       }
     } catch (caught) {
-      console.error('[admin] Upload failed:', caught);
+      console.error("[admin] Upload failed:", caught);
       setFieldErrors((current) => ({
         ...current,
-        file: 'Could not reach the server. Please try again.',
+        file: "Could not reach the server. Please try again.",
       }));
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setUploading(false);
+    }
+  };
+
+  /**
+   * Same upload flow as `handleFileChange`, for the cover image. Kept as a
+   * separate handler (rather than a shared, parameterised one) because the two
+   * report errors into different field-error keys and hit different routes.
+   */
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setFormError("");
+    clearFieldError("image_path");
+
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+      setFieldErrors((current) => ({
+        ...current,
+        image_path: `That image is ${formatBytes(file.size)}. The limit is ${formatBytes(
+          MAX_IMAGE_UPLOAD_BYTES,
+        )}.`,
+      }));
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      return;
+    }
+
+    setUploadingImage(true);
+    const previousSessionUpload =
+      imageSessionUploads[imageSessionUploads.length - 1] ?? null;
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+
+      const response = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        body,
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload.ok) {
+        setFieldErrors((current) => ({
+          ...current,
+          image_path: payload.error || "Could not upload that image.",
+        }));
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        setUploadingImage(false);
+        return;
+      }
+
+      setImagePath(payload.path);
+      setImageSessionUploads((current) => [...current, payload.path]);
+      setUploadingImage(false);
+
+      if (previousSessionUpload && previousSessionUpload !== payload.path) {
+        discardImageUpload(previousSessionUpload);
+      }
+    } catch (caught) {
+      console.error("[admin] Image upload failed:", caught);
+      setFieldErrors((current) => ({
+        ...current,
+        image_path: "Could not reach the server. Please try again.",
+      }));
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      setUploadingImage(false);
     }
   };
 
@@ -193,28 +294,45 @@ export default function PublicationForm({ mode = 'create', publication = null })
    * still point at a file that exists.
    */
   const handleRemoveFile = async () => {
-    setFormError('');
-    clearFieldError('file');
+    setFormError("");
+    clearFieldError("file");
 
     const uploadedThisSession = sessionUploads.includes(filePath);
 
     setFilePath(null);
-    setFileLabel('');
+    setFileLabel("");
     setSessionUploads([]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
 
     if (uploadedThisSession) {
       await discardUpload(filePath);
     }
   };
 
+  /** Same reasoning as `handleRemoveFile`, for the cover image. */
+  const handleRemoveImage = async () => {
+    setFormError("");
+    clearFieldError("image_path");
+
+    const uploadedThisSession = imageSessionUploads.includes(imagePath);
+    const pathToDiscard = imagePath;
+
+    setImagePath(null);
+    setImageSessionUploads([]);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+
+    if (uploadedThisSession) {
+      await discardImageUpload(pathToDiscard);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setFormError('');
+    setFormError("");
     setFieldErrors({});
 
-    if (uploading) {
-      setFormError('Wait for the file upload to finish before saving.');
+    if (uploading || uploadingImage) {
+      setFormError("Wait for the upload to finish before saving.");
       return;
     }
 
@@ -229,6 +347,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
       price_naira: isPaid ? price : null,
       status,
       file_path: filePath,
+      image_path: imagePath,
     };
 
     // Slug is set at creation and immutable thereafter.
@@ -238,63 +357,73 @@ export default function PublicationForm({ mode = 'create', publication = null })
 
     const endpoint = isEdit
       ? `/api/admin/publications/${publication.id}`
-      : '/api/admin/publications';
+      : "/api/admin/publications";
 
     try {
       const response = await fetch(endpoint, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok || !payload.ok) {
-        // The server may have discarded a file it could not attach to a row. If
-        // so, forget the path: resubmitting it would save a row pointing at an
-        // object that no longer exists.
+        // The server may have discarded a file/image it could not attach to a
+        // row. If so, forget the path: resubmitting it would save a row
+        // pointing at something that no longer exists.
         if (payload.fileDiscarded) {
-          setFilePath(isEdit ? publication?.file_path ?? null : null);
-          setFileLabel('');
+          setFilePath(isEdit ? (publication?.file_path ?? null) : null);
+          setFileLabel("");
           setSessionUploads([]);
-          if (fileInputRef.current) fileInputRef.current.value = '';
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+
+        if (payload.imageDiscarded) {
+          setImagePath(isEdit ? (publication?.image_path ?? null) : null);
+          setImageSessionUploads([]);
+          if (imageInputRef.current) imageInputRef.current.value = "";
         }
 
         if (payload.fieldErrors) {
-          // Two server field names differ from the local input names: the price is
-          // `price_naira`, and file problems are reported against `file_path`.
+          // Server field names differ from the local input names: the price is
+          // `price_naira`, and file/image problems are reported against
+          // `file_path` / `image_path`.
           const {
             price_naira: priceError,
             file_path: filePathError,
+            image_path: imagePathError,
             ...rest
           } = payload.fieldErrors;
 
           const mapped = { ...rest };
           if (priceError) mapped.price = priceError;
           if (filePathError) mapped.file = filePathError;
+          if (imagePathError) mapped.image_path = imagePathError;
 
           setFieldErrors(mapped);
           setFormError(
-            payload.fileDiscarded
-              ? 'Please correct the highlighted fields and attach the file again.'
-              : 'Please correct the highlighted fields.',
+            payload.fileDiscarded || payload.imageDiscarded
+              ? "Please correct the highlighted fields and attach the file/image again."
+              : "Please correct the highlighted fields.",
           );
         } else {
-          setFormError(payload.error || 'Could not save the publication.');
+          setFormError(payload.error || "Could not save the publication.");
         }
         setSubmitting(false);
         return;
       }
 
-      router.push('/admin/publications');
+      router.push("/admin/publications");
       router.refresh();
     } catch (caught) {
-      console.error('[admin] Save failed:', caught);
-      setFormError('Could not reach the server. Please try again.');
+      console.error("[admin] Save failed:", caught);
+      setFormError("Could not reach the server. Please try again.");
       setSubmitting(false);
     }
   };
 
-  const attachedFileName = fileLabel || (filePath ? filePath.split('/').pop() : '');
+  const attachedFileName =
+    fileLabel || (filePath ? filePath.split("/").pop() : "");
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-2xl space-y-6">
@@ -318,8 +447,8 @@ export default function PublicationForm({ mode = 'create', publication = null })
             /publications/{publication.slug}
           </p>
           <p className="mt-1.5 text-caption text-brand-muted">
-            The URL is fixed once a publication is created, so links already shared
-            keep working.
+            The URL is fixed once a publication is created, so links already
+            shared keep working.
           </p>
         </div>
       ) : (
@@ -331,7 +460,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
           onChange={(event) => {
             setSlugTouched(true);
             setSlug(event.target.value);
-            clearFieldError('slug');
+            clearFieldError("slug");
           }}
           onBlur={(event) => setSlug(slugify(event.target.value))}
           error={fieldErrors.slug}
@@ -347,7 +476,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
         value={type}
         onChange={(event) => {
           setType(event.target.value);
-          clearFieldError('type');
+          clearFieldError("type");
         }}
         error={fieldErrors.type}
       >
@@ -375,15 +504,20 @@ export default function PublicationForm({ mode = 'create', publication = null })
           value={description}
           onChange={(event) => {
             setDescription(event.target.value);
-            clearFieldError('description');
+            clearFieldError("description");
           }}
           aria-invalid={fieldErrors.description ? true : undefined}
-          aria-describedby={fieldErrors.description ? 'description-error' : undefined}
+          aria-describedby={
+            fieldErrors.description ? "description-error" : undefined
+          }
           className={textareaClasses(Boolean(fieldErrors.description))}
           placeholder="A short summary shown on the publications page."
         />
         {fieldErrors.description && (
-          <p id="description-error" className="mt-1.5 text-caption text-brand-error">
+          <p
+            id="description-error"
+            className="mt-1.5 text-caption text-brand-error"
+          >
             {fieldErrors.description}
           </p>
         )}
@@ -401,7 +535,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
             checked={isPaid}
             onChange={(event) => {
               setIsPaid(event.target.checked);
-              clearFieldError('price');
+              clearFieldError("price");
             }}
             className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
           />
@@ -410,8 +544,8 @@ export default function PublicationForm({ mode = 'create', publication = null })
               This is a paid publication
             </span>
             <span className="mt-0.5 block text-caption text-brand-muted">
-              Leave unchecked to offer it free. Free items can be read directly from
-              the site.
+              Leave unchecked to offer it free. Free items can be read directly
+              from the site.
             </span>
           </span>
         </label>
@@ -430,7 +564,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
               value={price}
               onChange={(event) => {
                 setPrice(event.target.value);
-                clearFieldError('price');
+                clearFieldError("price");
               }}
               error={fieldErrors.price}
               placeholder="15000"
@@ -452,7 +586,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
           htmlFor="file"
           className="mb-1.5 block text-caption font-medium text-brand-slate"
         >
-          {filePath ? 'Replace file' : 'Upload file'}
+          {filePath ? "Replace file" : "Upload file"}
         </label>
         <input
           ref={fileInputRef}
@@ -463,7 +597,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
           onChange={handleFileChange}
           disabled={uploading}
           aria-invalid={fieldErrors.file ? true : undefined}
-          aria-describedby={fieldErrors.file ? 'file-error' : 'file-hint'}
+          aria-describedby={fieldErrors.file ? "file-error" : "file-hint"}
           className="block w-full text-caption text-brand-slate file:mr-4 file:rounded-none file:border-0 file:bg-brand-navy file:px-4 file:py-2.5 file:text-caption file:font-medium file:text-white hover:file:bg-brand-navyDark disabled:opacity-60"
         />
 
@@ -505,6 +639,77 @@ export default function PublicationForm({ mode = 'create', publication = null })
         )}
       </fieldset>
 
+      {/* Cover image */}
+      <fieldset className="border border-slate-200 bg-white p-5">
+        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+          Cover image
+        </legend>
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          {imagePath && (
+            // Plain <img>, not next/image: this is an admin-only preview of a
+            // file that was just written to public/images/publicationUploads,
+            // not a performance-sensitive public page.
+            <img
+              src={imagePath}
+              alt=""
+              className="h-28 w-28 shrink-0 rounded-none border border-slate-200 object-cover"
+            />
+          )}
+
+          <div className="min-w-0 flex-1">
+            <label
+              htmlFor="image"
+              className="mb-1.5 block text-caption font-medium text-brand-slate"
+            >
+              {imagePath ? "Replace image" : "Upload image"}
+            </label>
+            <input
+              ref={imageInputRef}
+              id="image"
+              name="image"
+              type="file"
+              accept={IMAGE_UPLOAD_ACCEPT}
+              onChange={handleImageChange}
+              disabled={uploadingImage}
+              aria-invalid={fieldErrors.image_path ? true : undefined}
+              aria-describedby={
+                fieldErrors.image_path ? "image-error" : "image-hint"
+              }
+              className="block w-full text-caption text-brand-slate file:mr-4 file:rounded-none file:border-0 file:bg-brand-navy file:px-4 file:py-2.5 file:text-caption file:font-medium file:text-white hover:file:bg-brand-navyDark disabled:opacity-60"
+            />
+
+            <p id="image-hint" className="mt-2 text-caption text-brand-muted">
+              JPG, PNG, WEBP or GIF, up to {formatBytes(MAX_IMAGE_UPLOAD_BYTES)}
+              . Shown publicly on this publication&apos;s card. Optional.
+            </p>
+
+            {uploadingImage && (
+              <p className="mt-2 text-caption text-brand-navy">Uploading…</p>
+            )}
+
+            {!uploadingImage && imagePath && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="mt-2 text-caption font-medium text-brand-error underline decoration-1 underline-offset-2 transition-opacity hover:opacity-70"
+              >
+                Remove image
+              </button>
+            )}
+
+            {fieldErrors.image_path && (
+              <p
+                id="image-error"
+                className="mt-2 text-caption text-brand-error"
+              >
+                {fieldErrors.image_path}
+              </p>
+            )}
+          </div>
+        </div>
+      </fieldset>
+
       <Select
         label="Status"
         id="status"
@@ -513,7 +718,7 @@ export default function PublicationForm({ mode = 'create', publication = null })
         value={status}
         onChange={(event) => {
           setStatus(event.target.value);
-          clearFieldError('status');
+          clearFieldError("status");
         }}
         error={fieldErrors.status}
         options={PUBLICATION_STATUSES.map((value) => ({
@@ -532,10 +737,18 @@ export default function PublicationForm({ mode = 'create', publication = null })
       )}
 
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
-        <Button type="submit" loading={submitting} disabled={uploading}>
-          {isEdit ? 'Save changes' : 'Create publication'}
+        <Button
+          type="submit"
+          loading={submitting}
+          disabled={uploading || uploadingImage}
+        >
+          {isEdit ? "Save changes" : "Create publication"}
         </Button>
-        <Button href="/admin/publications" variant="ghost" disabled={submitting}>
+        <Button
+          href="/admin/publications"
+          variant="ghost"
+          disabled={submitting}
+        >
           Cancel
         </Button>
       </div>

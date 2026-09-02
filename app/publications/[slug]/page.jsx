@@ -7,6 +7,7 @@ import { formatNaira } from "@/lib/publications";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import Reveal from "@/components/motion/Reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function PublicationDetailPage({ params }) {
   return (
     <>
       <Section background="offWhite" spacing="lg">
-        <div className="max-w-3xl">
+        <Reveal variant="fadeUp" className="max-w-3xl">
           <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
             <Link
               href="/publications"
@@ -105,14 +106,14 @@ export default async function PublicationDetailPage({ params }) {
               {formatNaira(publication.price_naira)}
             </Badge>
           </div>
-        </div>
+        </Reveal>
       </Section>
 
       <Section background="white" spacing="md">
         <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-          <div>
+          <Reveal variant="slideRight">
             {publication.description ? (
-              <div className="max-w-2xl space-y-4 text-body text-brand-slate">
+              <div className="max-w-2xl space-y-4 text-body-lg text-brand-slate">
                 {publication.description
                   .split(/\n{2,}/)
                   .filter(Boolean)
@@ -125,9 +126,9 @@ export default async function PublicationDetailPage({ params }) {
                 Further details for this publication are on the way.
               </p>
             )}
-          </div>
+          </Reveal>
 
-          <aside>
+          <Reveal variant="slideLeft" delay={0.1} as="aside">
             <div className="border border-slate-200 bg-brand-offWhite p-6">
               <p className="text-caption font-semibold uppercase tracking-[0.16em] text-brand-muted">
                 Price
@@ -160,7 +161,7 @@ export default async function PublicationDetailPage({ params }) {
                 Back to all publications
               </Link>
             </p>
-          </aside>
+          </Reveal>
         </div>
       </Section>
 

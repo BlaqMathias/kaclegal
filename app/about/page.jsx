@@ -1,3 +1,5 @@
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import Button from "@/components/ui/Button";
 import HoverImage from "@/components/ui/HoverImage";
 import Section from "@/components/ui/Section";
@@ -85,18 +87,18 @@ export default function AboutPage() {
         </div>
 
         <div className="container-kac relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
+          <Reveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
             <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               About the Firm
             </p>
             <h1 className="mt-3 font-display font-bold text-hero text-brand-navy">
               What Do <span className="text-brand-navyDark"> We Do</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
               We pair commercial legal expertise with technology to help
               businesses and individuals move forward with clarity.
             </p>
-          </div>
+          </Reveal>
         </div>
       </Section>
 
@@ -108,12 +110,14 @@ export default function AboutPage() {
       <Section background="navyDarkPanel" spacing="lg">
         <div className="space-y-16 md:space-y-24">
           <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-            <HoverImage
-              src="/images/sections/vision.jpg"
-              tilt="left"
-              alt="Representative image for the firm's vision"
-            />
-            <div>
+            <Reveal variant="slideRight">
+              <HoverImage
+                src="/images/sections/vision.jpg"
+                tilt="left"
+                alt="Representative image for the firm's vision"
+              />
+            </Reveal>
+            <Reveal variant="slideLeft" delay={0.1}>
               <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
                 Looking Ahead
               </p>
@@ -121,11 +125,11 @@ export default function AboutPage() {
                 Our Vision
               </h2>
               <p className="mt-4 text-body text-white/75">{vision}</p>
-            </div>
+            </Reveal>
           </div>
 
           <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-            <div className="order-2 md:order-1">
+            <Reveal variant="slideRight" className="order-2 md:order-1">
               <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
                 What Drives Us
               </p>
@@ -133,14 +137,18 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="mt-4 text-body text-white/75">{mission}</p>
-            </div>
-            <div className="order-1 md:order-2">
+            </Reveal>
+            <Reveal
+              variant="slideLeft"
+              delay={0.1}
+              className="order-1 md:order-2"
+            >
               <HoverImage
                 src="/images/sections/mission.jpg"
                 tilt="right"
                 alt="Representative image for the firm's mission"
               />
-            </div>
+            </Reveal>
           </div>
         </div>
       </Section>
@@ -159,7 +167,7 @@ export default function AboutPage() {
         {/* Background image + navy scrim for text contrast */}
         <div aria-hidden="true" className="absolute inset-0 z-0">
           <Image
-            src="/images/sections/aboutgreek.png"
+            src="/images/sections/aboutgreek.webp"
             alt=""
             fill
             sizes="100vw"
@@ -181,18 +189,19 @@ export default function AboutPage() {
         </div>
 
         <div className="container-kac relative z-10">
-          <div className="mx-auto max-w-2xl text-center">
+          <Reveal variant="fadeUp" className="mx-auto max-w-2xl text-center">
             <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
               What We Stand For
             </p>
             <h2 className="mt-3 font-display text-h2 text-white">Our Values</h2>
             <p className="mt-5 text-body-lg text-white/80">{values}</p>
-          </div>
+          </Reveal>
 
-          <div className="mx-auto mt-14 grid max-w-5xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          <RevealStagger className="mx-auto mt-14 grid max-w-5xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {firmValues.map((item) => (
-              <div
+              <RevealItem
                 key={item.title}
+                variant="fadeUp"
                 className="border-l-2 border-brand-teal pl-5"
               >
                 <h3 className="font-display text-h4 text-white">
@@ -201,9 +210,9 @@ export default function AboutPage() {
                 <p className="mt-2 text-body text-white/70">
                   {item.description}
                 </p>
-              </div>
+              </RevealItem>
             ))}
-          </div>
+          </RevealStagger>
         </div>
       </Section>
 
@@ -212,11 +221,17 @@ export default function AboutPage() {
       {/* echoing the crs-motac.org "Welcome" panel treatment.              */}
       {/* ---------------------------------------------------------------- */}
       <Section background="offWhite" spacing="lg">
-        <p className="text-center text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
-          About Us
-        </p>
+        <Reveal variant="appear">
+          <p className="text-center text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
+            About Us
+          </p>
+        </Reveal>
 
-        <div className="mx-auto mt-6 max-w-5xl overflow-hidden rounded-3xl bg-brand-navyDark shadow-card-hover">
+        <Reveal
+          variant="morph"
+          duration={0.8}
+          className="mx-auto mt-6 max-w-5xl overflow-hidden rounded-3xl bg-brand-navyDark shadow-card-hover"
+        >
           <div className="bg-brand-navy px-6 py-5 text-center sm:px-10">
             <h2 className="font-display text-h3 text-white">Who We Are</h2>
           </div>
@@ -248,15 +263,17 @@ export default function AboutPage() {
               </Button>
             </div>
           </div>
-        </div>
+        </Reveal>
       </Section>
 
       <Section background="navy" spacing="lg">
-        <blockquote className="mx-auto max-w-4xl text-center">
-          <p className="font-display text-h2 leading-snug text-white">
-            &ldquo;{pullQuote}&rdquo;
-          </p>
-        </blockquote>
+        <Reveal variant="zoom">
+          <blockquote className="mx-auto max-w-4xl text-center">
+            <p className="font-display text-h2 leading-snug text-white">
+              &ldquo;{pullQuote}&rdquo;
+            </p>
+          </blockquote>
+        </Reveal>
       </Section>
     </>
   );

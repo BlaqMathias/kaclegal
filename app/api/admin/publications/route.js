@@ -1,18 +1,19 @@
-import { NextResponse } from 'next/server';
-import { requireAdminApi, unauthorizedBody } from '@/lib/auth';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizePublicationPayload } from '@/lib/publicationsAdmin';
-import { removeUnreferencedFile } from '@/lib/storage';
+import { requireAdminApi, unauthorizedBody } from "@/lib/auth";
+import { removeUnreferencedImage } from "@/lib/imageStorage";
+import { normalizePublicationPayload } from "@/lib/publicationsAdmin";
+import { removeUnreferencedFile } from "@/lib/storage";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 
 // Node runtime: this route uses the service-role Supabase client and Node crypto
 // via lib/storage. force-dynamic because the response depends on the session
 // cookie and must never be cached.
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /** Columns returned to the admin UI. */
 const ADMIN_COLUMNS =
-  'id, slug, title, type, description, is_paid, price_naira, file_path, status, created_at, updated_at';
+  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, created_at, updated_at";
 
 /**
  * GET /api/admin/publications — list every publication, drafts included.
@@ -30,14 +31,14 @@ export async function GET() {
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from('publications')
+    .from("publications")
     .select(ADMIN_COLUMNS)
-    .order('created_at', { ascending: false });
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('[api/admin/publications] List failed:', error);
+    console.error("[api/admin/publications] List failed:", error);
     return NextResponse.json(
-      { ok: false, error: 'Could not load publications.' },
+      { ok: false, error: "Could not load publications." },
       { status: 500 },
     );
   }
@@ -67,12 +68,12 @@ export async function POST(request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Invalid request body.' },
+      { ok: false, error: "Invalid request body." },
       { status: 400 },
     );
   }
 
-  const normalized = normalizePublicationPayload(body, { mode: 'create' });
+  const normalized = normalizePublicationPayload(body, { mode: "create" });
   if (!normalized.ok) {
     return NextResponse.json(
       { ok: false, fieldErrors: normalized.fieldErrors },
@@ -82,44 +83,50 @@ export async function POST(request) {
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from('publications')
+    .from("publications")
     .insert(normalized.data)
     .select(ADMIN_COLUMNS)
     .single();
 
   if (error) {
     // 23505 = unique_violation, which here can only be the slug.
-    if (error.code === '23505') {
+    if (error.code === "23505") {
       return NextResponse.json(
         {
           ok: false,
           fieldErrors: {
-            slug: 'That URL slug is already in use. Choose a different one.',
+            slug: "That URL slug is already in use. Choose a different one.",
           },
         },
         { status: 409 },
       );
     }
 
-    console.error('[api/admin/publications] Create failed:', error);
+    console.error("[api/admin/publications] Create failed:", error);
 
-    // The row was rejected, so the already-uploaded file would be orphaned in
-    // the bucket. Clean it up rather than leaving it behind — and tell the form,
-    // because it is still holding that now-dead storage key. Without the flag the
-    // admin retries, the second insert succeeds, and the row points at a file
-    // that no longer exists.
+    // The row was rejected, so the already-uploaded file/image would be orphaned.
+    // Clean both up rather than leaving them behind — and tell the form, because
+    // it is still holding those now-dead references. Without the flags the admin
+    // retries, the second insert succeeds, and the row points at files that no
+    // longer exist.
     //
-    // `removeUnreferencedFile` rather than a plain delete: if the submitted path
-    // happened to belong to an existing publication, that row's file must survive.
+    // `removeUnreferencedFile`/`removeUnreferencedImage` rather than a plain
+    // delete: if either submitted path happened to belong to an existing
+    // publication, that row's file/image must survive.
     const discarded = await removeUnreferencedFile(normalized.data.file_path);
+    const imageDiscarded = await removeUnreferencedImage(
+      normalized.data.image_path,
+    );
 
     return NextResponse.json(
       {
         ok: false,
-        error: discarded
-          ? 'Could not save the publication. The uploaded file was discarded — please attach it again.'
-          : 'Could not save the publication.',
+        error:
+          discarded || imageDiscarded
+            ? "Could not save the publication. The uploaded file/image was discarded — please attach it again."
+            : "Could not save the publication.",
         fileDiscarded: discarded,
+        imageDiscarded,
       },
       { status: 500 },
     );

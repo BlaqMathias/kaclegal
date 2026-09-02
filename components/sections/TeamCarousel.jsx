@@ -1,5 +1,6 @@
 "use client";
 
+import Reveal from "@/components/motion/Reveal";
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
 import { team } from "@/content/team";
@@ -17,7 +18,7 @@ const SWIPE_THRESHOLD_PX = 40;
  * used on /team — so they're looked up by a separate naming convention.
  */
 function carouselPhotoFor(slug) {
-  return `/images/team/${slug}-carousel.webp`;
+  return `/images/team/${slug}.webp`;
 }
 
 /** Shortest signed distance between two carousel positions, accounting for wraparound. */
@@ -81,7 +82,10 @@ export default function TeamCarousel() {
   return (
     <Section background="navy" spacing="lg" className="overflow-hidden">
       <div className="flex flex-col items-center gap-10 md:flex-row md:gap-14">
-        <div className="text-center md:w-2/5 md:text-left">
+        <Reveal
+          variant="slideRight"
+          className="text-center md:w-2/5 md:text-left"
+        >
           <h2 className="font-display text-h1 text-white font-bold">
             Finding a Lawyer You Can Trust
             <br />
@@ -106,9 +110,9 @@ export default function TeamCarousel() {
               Request a Consultation
             </Button>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="md:w-3/5">
+        <Reveal variant="zoom" delay={0.15} className="md:w-3/5">
           <div
             className="relative mx-auto h-72 w-full max-w-md select-none sm:h-80"
             onTouchStart={handleTouchStart}
@@ -156,7 +160,7 @@ export default function TeamCarousel() {
               );
             })}
           </div>
-        </div>
+        </Reveal>
       </div>
     </Section>
   );

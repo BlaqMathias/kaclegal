@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import Reveal from "@/components/motion/Reveal";
 
 const EXPLORE_LINKS = [
   { label: "About", href: "/about" },
@@ -29,7 +30,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-brand-navyDark text-white/75">
-      <div className="container-kac py-14">
+      <Reveal variant="appear" className="container-kac py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand + contact */}
           <div className="lg:pr-6">
@@ -133,7 +134,7 @@ export default function Footer() {
         <div className="mt-12 border-t border-white/10 pt-6 text-caption text-white/60">
           <p>&copy; {year} Koko Asuquo Chambers. All rights reserved.</p>
         </div>
-      </div>
+      </Reveal>
     </footer>
   );
 }

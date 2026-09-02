@@ -1,5 +1,6 @@
 import Badge from "@/components/ui/Badge";
 import { formatDateUTC, formatNaira } from "@/lib/publications";
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -31,6 +32,7 @@ export default function PublicationCard({ publication }) {
     description,
     is_paid: isPaid,
     price_naira: price,
+    image_path: imagePath,
     created_at: createdAt,
   } = publication;
 
@@ -90,6 +92,18 @@ export default function PublicationCard({ publication }) {
     </div>
   );
 
+  const coverImage = imagePath ? (
+    <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-offWhite">
+      <Image
+        src={imagePath}
+        alt=""
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover"
+      />
+    </div>
+  ) : null;
+
   const dateBand = (
     <div className="mt-auto border-t border-slate-100 bg-brand-offWhite px-6 py-3">
       <p className="text-caption text-brand-muted">
@@ -104,6 +118,7 @@ export default function PublicationCard({ publication }) {
         href={`/publications/${slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-hover"
       >
+        {coverImage}
         {body}
         {dateBand}
       </Link>
@@ -112,6 +127,7 @@ export default function PublicationCard({ publication }) {
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+      {coverImage}
       {body}
       {dateBand}
     </div>

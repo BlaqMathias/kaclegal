@@ -1,5 +1,6 @@
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
+import Reveal from "@/components/motion/Reveal";
 
 /**
  * CtaBanner — the final conversion push before the footer. Full-width navy
@@ -31,7 +32,7 @@ export default function CtaBanner({ practiceArea = null }) {
 
   return (
     <Section background="navy" spacing="md">
-      <div className="mx-auto max-w-2xl text-center">
+      <Reveal variant="fadeUp" className="mx-auto max-w-2xl text-center">
         <h2 className="font-display text-h2">
           Let&rsquo;s talk about what&rsquo;s next.
         </h2>
@@ -47,7 +48,7 @@ export default function CtaBanner({ practiceArea = null }) {
             Request a Consultation
           </Button>
         </div>
-      </div>
+      </Reveal>
     </Section>
   );
 }

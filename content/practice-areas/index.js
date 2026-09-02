@@ -1,9 +1,11 @@
-import companySecretarial from './company-secretarial';
-import dataPrivacy from './data-privacy';
-import regulatoryCompliance from './regulatory-compliance';
-import intellectualProperty from './intellectual-property';
-import realEstate from './real-estate';
-import familyLaw from './family-law';
+import commercialLaw from "./commercial-law";
+import companySecretarial from "./company-secretarial";
+import dataPrivacy from "./data-privacy";
+import employmentLabourLaw from "./employment-labour-law";
+import familyLaw from "./family-law";
+import intellectualProperty from "./intellectual-property";
+import realEstate from "./real-estate";
+import regulatoryCompliance from "./regulatory-compliance";
 
 /**
  * @typedef {object} SubService
@@ -32,6 +34,8 @@ export const practiceAreas = [
   regulatoryCompliance,
   intellectualProperty,
   realEstate,
+  commercialLaw,
+  employmentLabourLaw,
   familyLaw,
 ];
 

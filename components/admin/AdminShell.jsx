@@ -1,12 +1,16 @@
-import Link from 'next/link';
-import LogoutButton from '@/components/admin/LogoutButton';
+import LogoutButton from "@/components/admin/LogoutButton";
+import Link from "next/link";
 
 /**
  * AdminShell — chrome for authenticated admin pages.
  *
- * A slim top bar with the brand wordmark, the signed-in email and a sign-out
- * button, plus a page header. Kept visually plainer than the public site on
- * purpose: this is a working tool, not a marketing surface.
+ * A navy-dark top bar with the brand wordmark, the signed-in email and a
+ * sign-out button, plus a page header on the near-black page background.
+ * Page content itself renders inside a white panel — `PublicationsTable` and
+ * `PublicationForm` are both designed for a light surface (their own field
+ * labels, borders, etc. all assume it), so rather than re-theme every
+ * component for a dark background, the shell gives them one light "console"
+ * to sit on while the surrounding chrome carries the dark theme.
  *
  * Only wrap pages that have already called `requireAdminPage()` — this component
  * displays the session, it doesn't verify it.
@@ -26,15 +30,15 @@ export default function AdminShell({
   children,
 }) {
   return (
-    <div className="min-h-screen bg-brand-offWhite">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-brand-navyDark">
+      <header className="border-b border-white/10 bg-brand-navy">
         <div className="container-kac flex h-16 items-center justify-between gap-4">
           <Link
             href="/admin/publications"
             className="leading-none"
             aria-label="KAC admin — publications"
           >
-            <span className="block font-display text-[15px] font-semibold text-brand-navy">
+            <span className="block font-display text-[15px] font-semibold text-white">
               Koko Asuquo Chambers
             </span>
             <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-[0.28em] text-brand-teal">
@@ -44,7 +48,7 @@ export default function AdminShell({
 
           <div className="flex items-center gap-3">
             {email && (
-              <span className="hidden text-caption text-brand-muted sm:inline">
+              <span className="hidden text-caption text-white/60 sm:inline">
                 {email}
               </span>
             )}
@@ -56,17 +60,21 @@ export default function AdminShell({
       <div className="container-kac py-10 md:py-14">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-h1 text-brand-navy">{title}</h1>
+            <h1 className="text-h1 text-white">{title}</h1>
             {description && (
-              <p className="mt-2 max-w-2xl text-body text-brand-muted">
+              <p className="mt-2 max-w-2xl text-body text-white/70">
                 {description}
               </p>
             )}
           </div>
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {actions && (
+            <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          )}
         </div>
 
-        <div className="mt-8">{children}</div>
+        <div className="mt-8 rounded-3xl bg-white p-6 shadow-card-hover md:p-8">
+          {children}
+        </div>
       </div>
     </div>
   );

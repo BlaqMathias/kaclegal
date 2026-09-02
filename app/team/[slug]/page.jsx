@@ -1,3 +1,5 @@
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Badge from "@/components/ui/Badge";
 import Section from "@/components/ui/Section";
@@ -85,7 +87,7 @@ export default function TeamProfilePage({ params }) {
           className="pointer-events-none absolute bottom-0 left-1/2 z-0 -translate-x-1/2 opacity-90 lg:left-auto lg:right-4 lg:translate-x-0 lg:opacity-10 xl:right-10"
         >
           <Image
-            src="/images/sections/lady-justice.png"
+            src="/images/sections/lady-justice.webp"
             alt=""
             width={1024}
             height={1536}
@@ -95,7 +97,10 @@ export default function TeamProfilePage({ params }) {
 
         <div className="container-kac relative z-10">
           <div className="grid gap-10 text-center md:grid-cols-[minmax(0,18rem)_1fr] md:items-start md:gap-12 md:text-left">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl bg-white shadow-card-hover md:mx-0">
+            <Reveal
+              variant="slideRight"
+              className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl bg-white shadow-card-hover md:mx-0"
+            >
               <Image
                 src={photo}
                 alt={name}
@@ -103,9 +108,13 @@ export default function TeamProfilePage({ params }) {
                 sizes="(max-width: 768px) 100vw, 288px"
                 className="object-cover"
               />
-            </div>
+            </Reveal>
 
-            <div className="pb-[21rem] sm:pb-[25rem] lg:pb-0">
+            <Reveal
+              variant="slideLeft"
+              delay={0.1}
+              className="pb-[21rem] sm:pb-[25rem] lg:pb-0"
+            >
               <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
                 Our Team
               </p>
@@ -127,21 +136,25 @@ export default function TeamProfilePage({ params }) {
                   <h2 className="font-display text-h4 text-white">
                     Practice Areas
                   </h2>
-                  <ul className="mt-4 flex flex-wrap justify-center gap-3 md:justify-start">
+                  <RevealStagger
+                    as="ul"
+                    stagger={0.08}
+                    className="mt-4 flex flex-wrap justify-center gap-3 md:justify-start"
+                  >
                     {linkedAreas.map((area) => (
-                      <li key={area.slug}>
+                      <RevealItem key={area.slug} as="li" variant="fadeUp">
                         <Link
                           href={`/practice-areas/${area.slug}`}
                           className="inline-flex items-center rounded-full bg-brand-teal px-4 py-2 text-sm font-medium text-white"
                         >
                           {area.title}
                         </Link>
-                      </li>
+                      </RevealItem>
                     ))}
-                  </ul>
+                  </RevealStagger>
                 </div>
               )}
-            </div>
+            </Reveal>
           </div>
         </div>
       </Section>
