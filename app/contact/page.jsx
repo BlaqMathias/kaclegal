@@ -1,10 +1,10 @@
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import ConsultationForm from "@/components/sections/ConsultationForm";
 import OfficeCard from "@/components/sections/OfficeCard";
 import Section from "@/components/ui/Section";
 import Image from "next/image";
 import { Suspense } from "react";
-import Reveal from "@/components/motion/Reveal";
-import { RevealStagger, RevealItem } from "@/components/motion/RevealStagger";
 
 export const metadata = {
   title: "Contact",
@@ -83,7 +83,7 @@ export default function ContactPage() {
             <h1 className="mt-3 font-display text-hero text-brand-navy">
               Get in <span className="text-brand-navyDark"> Touch</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
               Tell us about your business or the matter you need help with, and
               we&rsquo;ll point you to the right member of our team. Prefer to
               reach out directly? Our office details are below.

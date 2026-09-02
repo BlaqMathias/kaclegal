@@ -58,10 +58,6 @@ const pullQuote =
 export default function AboutPage() {
   return (
     <>
-      {/* ---------------------------------------------------------------- */}
-      {/* Intro — centered, sitting on the same net-line grid + glow the    */}
-      {/* homepage hero uses, so the About page opens with a familiar feel. */}
-      {/* ---------------------------------------------------------------- */}
       <Section
         background="white"
         spacing="sm"
@@ -94,7 +90,7 @@ export default function AboutPage() {
             <h1 className="mt-3 font-display font-bold text-hero text-brand-navy">
               What Do <span className="text-brand-navyDark"> We Do</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
               We pair commercial legal expertise with technology to help
               businesses and individuals move forward with clarity.
             </p>
@@ -102,11 +98,6 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ---------------------------------------------------------------- */}
-      {/* Vision / Mission — split rows (text + image), alternating sides,  */}
-      {/* styled after thekreativestack.com/sme-solutions. Images tilt at   */}
-      {/* rest and settle + zoom in on hover.                               */}
-      {/* ---------------------------------------------------------------- */}
       <Section background="navyDarkPanel" spacing="lg">
         <div className="space-y-16 md:space-y-24">
           <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
@@ -153,11 +144,6 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ---------------------------------------------------------------- */}
-      {/* What We Stand For — values, over a background photo with a navy   */}
-      {/* overlay for text contrast, plus slow drifting glow elements for   */}
-      {/* a bit of life on the dark panel.                                  */}
-      {/* ---------------------------------------------------------------- */}
       <Section
         background="navyDarkPanel"
         spacing="md"
@@ -194,7 +180,7 @@ export default function AboutPage() {
               What We Stand For
             </p>
             <h2 className="mt-3 font-display text-h2 text-white">Our Values</h2>
-            <p className="mt-5 text-body-lg text-white/80">{values}</p>
+            <p className="mt-5 text-body text-white/80">{values}</p>
           </Reveal>
 
           <RevealStagger className="mx-auto mt-14 grid max-w-5xl gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -216,10 +202,6 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ---------------------------------------------------------------- */}
-      {/* Who We Are — framed panel with a title bar and corner accents,    */}
-      {/* echoing the crs-motac.org "Welcome" panel treatment.              */}
-      {/* ---------------------------------------------------------------- */}
       <Section background="offWhite" spacing="lg">
         <Reveal variant="appear">
           <p className="text-center text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">

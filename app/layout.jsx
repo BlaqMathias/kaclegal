@@ -46,7 +46,10 @@ const bricolage = localFont({
   display: "swap",
 });
 
+const SITE_URL = "https://kaclegalpractice.com";
+
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Koko Asuquo Chambers (KAC) - Business & Corporate Legal Service",
     template: "%s | Koko Asuquo Chambers",
@@ -54,8 +57,21 @@ export const metadata = {
   icons: { icon: "/images/logo/kac-icon.png" },
   description:
     "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+  openGraph: {
+    type: "website",
+    siteName: "Koko Asuquo Chambers",
+    title: "Koko Asuquo Chambers (KAC) - Business & Corporate Legal Service",
+    description:
+      "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary",
+    title: "Koko Asuquo Chambers (KAC) - Business & Corporate Legal Service",
+    description:
+      "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+  },
 };
-
 export const viewport = {
   themeColor: "#04509F",
 };

@@ -1,11 +1,11 @@
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Badge from "@/components/ui/Badge";
 import Card from "@/components/ui/Card";
 import Section from "@/components/ui/Section";
 import { team } from "@/content/team";
 import Image from "next/image";
-import Reveal from "@/components/motion/Reveal";
-import { RevealStagger, RevealItem } from "@/components/motion/RevealStagger";
 
 export const metadata = {
   title: "Our Team",
@@ -30,7 +30,7 @@ export default function TeamPage() {
           <h1 className="mt-3 font-display text-hero text-white">
             The people behind the practice
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-body-lg text-white/80">
+          <p className="mx-auto mt-5 max-w-xl text-body text-white/80">
             A multidisciplinary team combining commercial legal expertise with a
             practical, technology-forward approach.
           </p>

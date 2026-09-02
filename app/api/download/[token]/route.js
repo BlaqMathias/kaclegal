@@ -1,13 +1,18 @@
-import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { createSignedDownloadUrl } from '@/lib/storage';
-import { consumeDownloadToken } from '@/lib/tokens';
+import { createSignedDownloadUrl } from "@/lib/storage";
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { consumeDownloadToken } from "@/lib/tokens";
+import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-/** How long a purchased-item signed link stays valid. Long enough to start a download. */
-const SIGNED_URL_TTL_SECONDS = 300;
+/**
+ * How long a purchased-item signed link stays valid. Long enough to start a
+ * download, with headroom for minor clock skew between this server and
+ * Supabase Storage (which is what an "exp claim timestamp check failed"
+ * error usually means — see lib/storage.js).
+ */
+const SIGNED_URL_TTL_SECONDS = 600;
 
 /**
  * GET /api/download/[token] — deliver a purchased file.
@@ -25,10 +30,13 @@ const SIGNED_URL_TTL_SECONDS = 300;
  * @param {{params: {token: string}}} context
  */
 export async function GET(_request, { params }) {
-  const token = String(params?.token ?? '').trim();
+  const token = String(params?.token ?? "").trim();
 
   if (!token) {
-    return NextResponse.json({ ok: false, error: 'Not found.' }, { status: 404 });
+    return NextResponse.json(
+      { ok: false, error: "Not found." },
+      { status: 404 },
+    );
   }
 
   const result = await consumeDownloadToken(token);
@@ -38,26 +46,30 @@ export async function GET(_request, { params }) {
     // the same token and show the right "expired" / "already used" state —
     // rather than returning a bare JSON error for what should be a page view.
     return NextResponse.redirect(new URL(`/download/${token}`, _request.url), {
-      headers: { 'Cache-Control': 'no-store' },
+      headers: { "Cache-Control": "no-store" },
     });
   }
 
   const supabase = getSupabaseAdmin();
   const { data: publication, error } = await supabase
-    .from('publications')
-    .select('slug, file_path')
-    .eq('id', result.publicationId)
+    .from("publications")
+    .select("slug, file_path")
+    .eq("id", result.publicationId)
     .maybeSingle();
 
   if (error || !publication?.file_path) {
-    console.error('[api/download] Publication or file_path missing:', result.publicationId, error);
+    console.error(
+      "[api/download] Publication or file_path missing:",
+      result.publicationId,
+      error,
+    );
     return NextResponse.json(
-      { ok: false, error: 'Could not open this download.' },
+      { ok: false, error: "Could not open this download." },
       { status: 500 },
     );
   }
 
-  const extension = publication.file_path.split('.').pop() || 'pdf';
+  const extension = publication.file_path.split(".").pop() || "pdf";
   const signedUrl = await createSignedDownloadUrl(publication.file_path, {
     expiresIn: SIGNED_URL_TTL_SECONDS,
     downloadAs: `${publication.slug}.${extension}`,
@@ -65,7 +77,7 @@ export async function GET(_request, { params }) {
 
   if (!signedUrl) {
     return NextResponse.json(
-      { ok: false, error: 'Could not open this download.' },
+      { ok: false, error: "Could not open this download." },
       { status: 502 },
     );
   }
@@ -73,6 +85,6 @@ export async function GET(_request, { params }) {
   return NextResponse.redirect(signedUrl, {
     // The signed URL expires and the download count has already been spent —
     // nothing about this response may be cached or replayed.
-    headers: { 'Cache-Control': 'no-store' },
+    headers: { "Cache-Control": "no-store" },
   });
 }

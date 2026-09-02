@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Columns returned to the admin UI. */
 const ADMIN_COLUMNS =
-  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, created_at, updated_at";
+  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, created_at, updated_at";
 
 /** Matches a canonical UUID, so a junk id fails fast instead of hitting Postgres. */
 const UUID_PATTERN =
@@ -206,6 +206,16 @@ export async function PUT(request, { params }) {
  * DELETE /api/admin/publications/[id] — delete a publication, its file, and its
  * cover image.
  *
+ * Refuses to delete a publication that has any transaction records — those
+ * rows are the receipts behind real purchases (buyer emails, amounts,
+ * download tokens all trace back to `publication_id`), and deleting the
+ * publication out from under them would either cascade-delete a paying
+ * customer's purchase history or leave orphaned records, depending on how
+ * the foreign key is configured. Either way it's not a decision to make
+ * silently from a DELETE click. The admin's path for taking a purchased item
+ * off the site is to unpublish it (edit → set status to Draft) instead,
+ * which the caller is told explicitly via `reason: 'has_transactions'`.
+ *
  * The row goes first, then the file/image. Deleting them first would risk a
  * published row pointing at nothing if the row delete then failed.
  *
@@ -236,6 +246,39 @@ export async function DELETE(_request, { params }) {
   }
 
   const supabase = getSupabaseAdmin();
+
+  const { data: transactionRows, error: transactionsError } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("publication_id", id)
+    .limit(1);
+
+  if (transactionsError) {
+    console.error(
+      "[api/admin/publications/:id] Transaction check failed:",
+      transactionsError,
+    );
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Could not check this publication's purchase history.",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (transactionRows && transactionRows.length > 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        reason: "has_transactions",
+        error:
+          "This publication has transaction records — edit it and unpublish instead.",
+      },
+      { status: 409 },
+    );
+  }
+
   const { error } = await supabase.from("publications").delete().eq("id", id);
 
   if (error) {

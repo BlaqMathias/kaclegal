@@ -1,3 +1,4 @@
+import Reveal from "@/components/motion/Reveal";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Section from "@/components/ui/Section";
 import {
@@ -6,7 +7,6 @@ import {
 } from "@/content/practice-areas";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import Reveal from "@/components/motion/Reveal";
 
 /**
  * Pre-render one static page per known practice area at build time. Any slug not
@@ -98,7 +98,7 @@ export default function PracticeAreaDetailPage({ params }) {
             <h1 className="mt-3 font-display text-hero text-brand-navy">
               {title}
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
               {summary}
             </p>
           </Reveal>
@@ -149,16 +149,12 @@ export default function PracticeAreaDetailPage({ params }) {
               <h2 className="mt-3 font-display text-h2 text-white">
                 What This Means For You
               </h2>
-              <p className="mt-5 text-body-lg text-white/80">{intro}</p>
+              <p className="mt-5 text-body text-white/80">{intro}</p>
             </Reveal>
           </div>
         </div>
       </Section>
 
-      {/* ---------------------------------------------------------------- */}
-      {/* How We Help — alternating timeline on the net-line grid + slow    */}
-      {/* drifting glow, center connector line.                            */}
-      {/* ---------------------------------------------------------------- */}
       <Section
         background="navyDarkPanel"
         spacing="lg"
@@ -200,12 +196,10 @@ export default function PracticeAreaDetailPage({ params }) {
           </Reveal>
 
           <div className="relative mx-auto mt-16 max-w-5xl">
-            {/* Center connector line — desktop only. */}
             <div
               aria-hidden="true"
               className="absolute inset-y-0 left-1/2 hidden w-[3px] -translate-x-1/2 bg-gradient-to-b from-transparent via-brand-teal to-transparent md:block"
             />
-            {/* Small floating accent dots for a bit of life along the line. */}
             <div
               aria-hidden="true"
               className="absolute left-1/2 top-1/4 hidden h-3 w-3 -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-teal to-brand-navy md:block"
@@ -245,7 +239,6 @@ export default function PracticeAreaDetailPage({ params }) {
                     key={service.title}
                     className="relative grid gap-6 md:grid-cols-2 md:gap-16"
                   >
-                    {/* Row marker on the center line. */}
                     <span
                       aria-hidden="true"
                       className="absolute left-1/2 top-8 hidden h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white bg-brand-teal md:block"

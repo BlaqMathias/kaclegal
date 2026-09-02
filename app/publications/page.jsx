@@ -1,8 +1,8 @@
+import Reveal from "@/components/motion/Reveal";
 import CtaBanner from "@/components/sections/CtaBanner";
 import PublicationsBrowser from "@/components/sections/PublicationsBrowser";
 import Section from "@/components/ui/Section";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
-import Reveal from "@/components/motion/Reveal";
 
 // Publications are managed through /admin and can change at any time, so this
 // page is rendered per request rather than cached at build.
@@ -93,7 +93,7 @@ export default async function PublicationsPage() {
             <h1 className="mt-3 font-display text-hero text-brand-navy">
               Writing from the practice
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-body-lg text-brand-muted">
+            <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
               Books, research papers, guides and articles drawn from the work we
               do for businesses across Nigeria. Some are free to read; others
               are available to purchase.

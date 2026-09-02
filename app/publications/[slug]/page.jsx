@@ -1,3 +1,4 @@
+import Reveal from "@/components/motion/Reveal";
 import BuyButton from "@/components/sections/BuyButton";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Badge from "@/components/ui/Badge";
@@ -7,7 +8,6 @@ import { formatNaira } from "@/lib/publications";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import Reveal from "@/components/motion/Reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +88,7 @@ export default async function PublicationDetailPage({ params }) {
   return (
     <>
       <Section background="offWhite" spacing="lg">
-        <Reveal variant="fadeUp" className="max-w-3xl">
+        <Reveal variant="fadeUp" className="mx-auto max-w-3xl text-center">
           <p className="text-caption font-semibold uppercase tracking-[0.22em] text-brand-teal">
             <Link
               href="/publications"
@@ -97,10 +97,10 @@ export default async function PublicationDetailPage({ params }) {
               Publications
             </Link>
           </p>
-          <h1 className="mt-3 font-display text-h1 text-brand-navy">
+          <h1 className="mt-3 font-display text-h1 text-brand-navyDark">
             {publication.title}
           </h1>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
             <Badge variant="navy">{publication.type}</Badge>
             <Badge variant="muted">
               {formatNaira(publication.price_naira)}
@@ -122,7 +122,7 @@ export default async function PublicationDetailPage({ params }) {
                   ))}
               </div>
             ) : (
-              <p className="text-body-lg text-brand-muted">
+              <p className="text-body text-brand-muted">
                 Further details for this publication are on the way.
               </p>
             )}

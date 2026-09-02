@@ -16,7 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-/** Wording for each status in the dropdown, keyed by the stored value. */
+/** Wording for each status checkbox, keyed by the stored value. */
 const STATUS_LABELS = {
   draft: "Draft — hidden from the public site",
   published: "Published — visible to everyone",
@@ -710,22 +710,41 @@ export default function PublicationForm({
         </div>
       </fieldset>
 
-      <Select
-        label="Status"
-        id="status"
-        name="status"
-        required
-        value={status}
-        onChange={(event) => {
-          setStatus(event.target.value);
-          clearFieldError("status");
-        }}
-        error={fieldErrors.status}
-        options={PUBLICATION_STATUSES.map((value) => ({
-          value,
-          label: STATUS_LABELS[value] ?? value,
-        }))}
-      />
+      <fieldset className="border border-slate-200 bg-white p-5">
+        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+          Status
+        </legend>
+
+        <div className="space-y-3">
+          {PUBLICATION_STATUSES.map((value) => (
+            <label key={value} className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                name="status"
+                checked={status === value}
+                onChange={() => {
+                  // Checkbox-styled, but radio in behaviour: checking one of
+                  // the two always selects that value outright — there is no
+                  // "both unchecked" state, since a publication is always
+                  // either a draft or published, never neither.
+                  setStatus(value);
+                  clearFieldError("status");
+                }}
+                className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
+              />
+              <span className="block text-body font-medium text-brand-slate">
+                {STATUS_LABELS[value] ?? value}
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {fieldErrors.status && (
+          <p className="mt-2 text-caption text-brand-error">
+            {fieldErrors.status}
+          </p>
+        )}
+      </fieldset>
 
       {formError && (
         <div

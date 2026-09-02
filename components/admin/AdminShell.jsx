@@ -5,12 +5,12 @@ import Link from "next/link";
  * AdminShell — chrome for authenticated admin pages.
  *
  * A navy-dark top bar with the brand wordmark, the signed-in email and a
- * sign-out button, plus a page header on the near-black page background.
- * Page content itself renders inside a white panel — `PublicationsTable` and
- * `PublicationForm` are both designed for a light surface (their own field
- * labels, borders, etc. all assume it), so rather than re-theme every
- * component for a dark background, the shell gives them one light "console"
- * to sit on while the surrounding chrome carries the dark theme.
+ * sign-out button, plus a page header and content area on the same
+ * near-black background — one continuous navy surface, nothing floating on
+ * top of it in a separate panel. Admin components (`PublicationsGrid`,
+ * `PublicationForm`, etc.) are themed for this dark surface directly, rather
+ * than assuming a light "console" the way an earlier version of this shell
+ * provided.
  *
  * Only wrap pages that have already called `requireAdminPage()` — this component
  * displays the session, it doesn't verify it.
@@ -72,9 +72,7 @@ export default function AdminShell({
           )}
         </div>
 
-        <div className="mt-8 rounded-3xl bg-white p-6 shadow-card-hover md:p-8">
-          {children}
-        </div>
+        <div className="mt-8">{children}</div>
       </div>
     </div>
   );

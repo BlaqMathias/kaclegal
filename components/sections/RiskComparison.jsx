@@ -1,6 +1,6 @@
+import Reveal from "@/components/motion/Reveal";
 import Section from "@/components/ui/Section";
 import Image from "next/image";
-import Reveal from "@/components/motion/Reveal";
 
 export default function RiskComparison() {
   return (
@@ -57,7 +57,7 @@ export default function RiskComparison() {
               More Than Your Business Gain
             </span>
           </h2>
-          <p className="mt-4 text-body-lg text-brand-navyDark">
+          <p className="mt-4 text-body text-brand-navyDark">
             We give growing businesses the legal certainty they need to move
             fast and grow confidently.
           </p>

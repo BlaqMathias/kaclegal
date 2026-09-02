@@ -1,9 +1,9 @@
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import Section from "@/components/ui/Section";
 import { practiceAreas } from "@/content/practice-areas";
 import Image from "next/image";
 import Link from "next/link";
-import Reveal from "@/components/motion/Reveal";
-import { RevealStagger, RevealItem } from "@/components/motion/RevealStagger";
 
 /**
  * PracticeAreaGrid — responsive grid of practice-area teaser cards
@@ -92,7 +92,7 @@ export default function PracticeAreaGrid({
                 </div>
 
                 {/* Title — sits on the section's own background, below the image box */}
-                <h3 className={`mt-4 font-display text-h3 ${titleColor}`}>
+                <h3 className={`mt-4 font-display text-h4 ${titleColor}`}>
                   {area.title}
                 </h3>
               </Link>

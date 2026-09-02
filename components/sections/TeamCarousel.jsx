@@ -91,7 +91,7 @@ export default function TeamCarousel() {
             <br />
             Is Harder Than It Should Be
           </h2>
-          <p className="mt-4 text-body-lg text-white/85">
+          <p className="mt-4 text-body text-white/85">
             We&rsquo;re different. Koko Asuquo Chambers serves you with lawyers
             that are connected to your business needs.
           </p>

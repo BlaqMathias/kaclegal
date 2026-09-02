@@ -29,7 +29,7 @@ export default function Hero() {
       <div className="container-kac relative z-10 pb-0 pt-5 text-center md:pt-10">
         <div className="mx-auto max-w-6xl">
           <Reveal variant="fadeDown" amount={0.1}>
-            <span className="inline-flex items-center rounded-full border border-brand-navy/15 px-4 py-1.5 text-caption font-medium text-brand-slate shadow-card">
+            <span className="inline-flex items-center rounded-full border bg-white border-brand-navy/15 px-4 py-1.5 text-caption font-medium text-brand-slate shadow-card">
               Commercial Law · Lagos &amp; Uyo
             </span>
           </Reveal>
@@ -45,7 +45,7 @@ export default function Hero() {
           </Reveal>
 
           <Reveal variant="fadeUp" delay={0.2} amount={0.1}>
-            <p className="mx-auto mt-5 max-w-3xl text-body-lg text-brand-navy">
+            <p className="mx-auto mt-5 max-w-3xl text-body text-brand-navy">
               With modern technical expertise, Koko Asuquo Chambers helps
               businesses in Lagos and Uyo get legally competitive — so you can
               focus on winning the market.
@@ -62,7 +62,7 @@ export default function Hero() {
                 href="/about"
                 variant="secondary"
                 size="lg"
-                className="!rounded-full !border-brand-navy !text-brand-navy hover:!bg-brand-navy hover:!text-white"
+                className="!rounded-full !border-brand-navy !text-brand-navy hover:!bg-brand-teal hover:!border-brand-teal hover:!text-white"
               >
                 About Us
               </Button>
@@ -71,19 +71,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/*
-        Full, uncropped image — width-driven height (h-auto) with
-        object-contain, so nothing at the top or bottom edge is ever clipped.
-        A fixed-height + object-cover crop was tried here before to shorten
-        the hero, but it was cutting off the hands at the point of contact —
-        the one part of this photo that actually matters. -mt-[20.83vw] is
-        tuned against this image's own natural height (800/1920 ≈ 41.67vw
-        full height, so -20.83vw pulls it up by almost exactly half),
-        producing the overlap with the text above. That full pull-up is too
-        aggressive on narrow screens — it was crowding the hero buttons
-        against the image — so mobile uses a smaller, gentler overlap and
-        only steps up to the full -20.83vw from `sm:` and up.
-      */}
       <Reveal variant="appear" duration={0.9}>
         <div className="relative z-0 -mt-[10vw] overflow-hidden sm:-mt-[20.83vw]">
           <Image
@@ -98,18 +85,8 @@ export default function Hero() {
         </div>
       </Reveal>
 
-      {/*
-        About-teaser panel, arranged in normal flow after the hero image.
-        The source photo has a chunk of empty canvas below where the hands
-        actually meet, which — now that the image renders uncropped
-        (object-contain) — shows up as visible dead space above this panel.
-        A flat `mt-8` doesn't reach past that built-in whitespace, so `sm:`
-        and up pulls the panel up to close most of it; mobile keeps the
-        original `mt-8` (2rem, matching container-kac's padding) since that
-        gap wasn't reported as a problem there.
-      */}
       <Reveal variant="fadeUp" amount={0.15}>
-        <div className="relative z-10 mt-8 px-4 pb-10 sm:-mt-[9vw] sm:px-8 md:px-12 md:pb-14">
+        <div className="relative z-10 mt-8 px-4 pb-10 sm:-mt-[5vw] sm:px-8 md:px-12 md:pb-14">
           <div className="mx-auto max-w-6xl rounded-3xl bg-brand-navyDark px-6 py-8 shadow-card-hover sm:px-10 sm:py-10">
             <div className="grid gap-8 md:grid-cols-2 md:gap-12">
               <div className="text-center md:text-left">
