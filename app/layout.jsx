@@ -47,7 +47,7 @@ const bricolage = localFont({
   display: "swap",
 });
 
-const SITE_URL = "https://kaclegalpractice.com";
+const SITE_URL = "https://www.kaclegalpractice.com";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

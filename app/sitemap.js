@@ -2,24 +2,8 @@ import { getPracticeAreaSlugs } from "@/content/practice-areas";
 import { getTeamSlugs } from "@/content/team";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 
-/**
- * The live, canonical domain. Update this in exactly one place if the domain
- * ever changes — everything else in this file (and metadataBase in
- * app/layout.jsx) should point here rather than hardcoding the string again.
- */
-const SITE_URL = "https://kaclegalpractice.com";
+const SITE_URL = "https://www.kaclegalpractice.com";
 
-/**
- * app/sitemap.js — a Next.js special file. Returning an array here makes
- * Next.js automatically serve it at /sitemap.xml; nothing else needs to
- * reference this file directly.
- *
- * Deliberately excludes: /admin/* (private, and blocked in robots.js too),
- * /download/[token] (single-use purchase links — indexing one would be
- * actively wrong, not just unhelpful), and any Supabase query failure falls
- * back to just the static + content-driven pages rather than crashing the
- * whole sitemap over one bad request.
- */
 export default async function sitemap() {
   const staticPages = [
     { url: SITE_URL, changeFrequency: "monthly", priority: 1 },

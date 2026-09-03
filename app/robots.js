@@ -1,4 +1,4 @@
-const SITE_URL = "https://kaclegalpractice.com";
+const SITE_URL = "https://www.kaclegalpractice.com";
 
 export default function robots() {
   return {
