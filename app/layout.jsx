@@ -1,6 +1,7 @@
 import ChromeGate from "@/components/layout/ChromeGate";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import OrganizationSchema from "@/components/seo/OrganizationSchema";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -90,6 +91,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={bricolage.variable}>
       <body className="flex min-h-screen flex-col">
+        <OrganizationSchema />
         <ChromeGate>
           <Header />
         </ChromeGate>
