@@ -20,13 +20,13 @@ const OFFICES = [
   {
     name: "Lagos Office",
     address: "5, Pascal Offiah Close, off Platinum Way, Lekki, Lagos.",
-    email: "kaclegalpractice@gmail.com",
+    email: "info@kaclegalpractice.com",
     phone: "+234 814 731 2802",
   },
   {
     name: "Uyo Office",
     address: "4, Udoumana Street, Uyo, Akwa Ibom State.",
-    email: "kaclegalpractice@gmail.com",
+    email: "info@kaclegalpractice.com",
     phone: "+234 814 731 2802",
   },
 ];

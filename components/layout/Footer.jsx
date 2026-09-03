@@ -1,6 +1,6 @@
+import Reveal from "@/components/motion/Reveal";
 import Image from "next/image";
 import Link from "next/link";
-import Reveal from "@/components/motion/Reveal";
 
 const EXPLORE_LINKS = [
   { label: "About", href: "/about" },
@@ -14,17 +14,6 @@ const LEGAL_LINKS = [
   { label: "Terms of Use", href: "/terms" },
 ];
 
-/**
- * Footer — dark (navyDark) site footer with the brand wordmark, contact
- * details, office blocks (placeholder copy until Phase 5/9), navigation
- * mirror, and legal links.
- *
- * Pairs the icon-only logo mark (kac-icon.png) with an HTML text wordmark,
- * rather than the full colour lockup: the icon's panels are already navy/teal
- * with white lettering carved out, so it reads cleanly here, but the full
- * lockup's wordmark text has no background behind it and would disappear
- * against this navy footer.
- */
 export default function Footer() {
   const year = new Date().getFullYear();
 
@@ -54,10 +43,10 @@ export default function Footer() {
             <div className="mt-5 space-y-1 text-caption">
               <p>
                 <a
-                  href="mailto:kaclegalpractice@gmail.com"
+                  href="mailto:info@kaclegalpractice.com"
                   className="transition-colors hover:text-white"
                 >
-                  kaclegalpractice@gmail.com
+                  info@kaclegalpractice.com
                 </a>
               </p>
               <p>
