@@ -12,7 +12,7 @@ export const metadata = {
  * fixed string, not the current date, so it accurately reflects the last
  * real revision rather than always showing "today."
  */
-const LAST_UPDATED = "August 28, 2026";
+const LAST_UPDATED = "September 3, 2026";
 
 /**
  * Terms of Use content, grounded in what this site actually does as built
@@ -48,8 +48,8 @@ const sections = [
     title: "Publications and Purchases",
     paragraphs: [
       "Some publications on this site are available for purchase; others are free.",
-      "Purchasing a paid publication entitles you to a personal-use digital copy, delivered through a secure download link. That link is valid for 24 hours after purchase and may be used to download the file up to 2 times, after which it expires.",
-      "If your download link expires or is exhausted before you have successfully downloaded your publication, contact us and we will issue a new link at no additional cost.",
+      "Purchasing a paid publication entitles you to a personal-use digital copy. After payment is confirmed, a secure download page is opened for you. Each access window is valid for 24 hours and allows up to 3 successful downloads.",
+      "If your access window expires or reaches its download limit, you can recover the purchase using the email address and payment reference from your receipt, without paying again. You may also contact us for help.",
       "Refunds: because publications are digital content delivered immediately upon purchase, we do not offer refunds once a publication has been downloaded.",
     ],
   },

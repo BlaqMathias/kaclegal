@@ -36,7 +36,7 @@ export default async function EditPublicationPage({ params }) {
   const { data, error } = await supabase
     .from("publications")
     .select(
-      "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, created_at, updated_at",
+      "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, archived_at, created_at, updated_at",
     )
     .eq("id", params.id)
     .maybeSingle();

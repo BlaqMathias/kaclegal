@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Section from '@/components/ui/Section';
+import PaidDownloadButton from '@/components/sections/PaidDownloadButton';
 import { peekDownloadToken } from '@/lib/tokens';
-import { formatDateUTC } from '@/lib/publications';
+import { formatDateTimeUTC, formatNaira } from '@/lib/publications';
 
 export const dynamic = 'force-dynamic';
-
 export const metadata = {
   title: 'Your download',
   robots: { index: false, follow: false, nocache: true },
@@ -13,36 +13,32 @@ export const metadata = {
 
 const EXPIRED_MESSAGES = {
   not_found: {
-    heading: 'We couldn\u2019t find that link',
-    body: 'This download link doesn\u2019t match anything on file. If you just completed a purchase, check your email for the correct link, or contact us for help.',
+    heading: 'We couldn’t find that link',
+    body: 'This download link does not match an active purchase. You can recover a completed purchase using the email address and payment reference from your receipt.',
   },
   expired: {
     heading: 'This link has expired',
-    body: 'Download links stay active for a limited time after purchase. Contact us and we\u2019ll get you a fresh link — you won\u2019t need to pay again.',
+    body: 'Your 24-hour download window has ended. Recover the purchase to create a fresh access window without paying again.',
   },
   exhausted: {
-    heading: 'This link has already been used',
-    body: 'This download link has reached its limit. Contact us and we\u2019ll get you a fresh link — you won\u2019t need to pay again.',
+    heading: 'Download limit reached',
+    body: 'This access window has used its available downloads. Recover the purchase if you need a fresh access window.',
+  },
+  revoked: {
+    heading: 'This download is no longer available',
+    body: 'Access to this purchase has been revoked. Contact us if you believe this is incorrect.',
   },
   error: {
     heading: 'Something went wrong',
-    body: 'We couldn\u2019t check this download link just now. Please try again in a moment, or contact us for help.',
+    body: 'We could not check this download right now. Please try again or contact us for help.',
   },
 };
 
-/**
- * /download/[token] — the post-payment download page.
- *
- * Only PEEKS at the token's status (see `peekDownloadToken`) — visiting this
- * page never spends one of the buyer's downloads. The actual file is only
- * served, and a download only spent, when the "Download your file" link below
- * is clicked, which hits `/api/download/[token]`.
- *
- * @param {{params: {token: string}}} props
- */
 export default async function DownloadPage({ params }) {
   const token = String(params?.token ?? '').trim();
-  const result = token ? await peekDownloadToken(token) : { ok: false, reason: 'not_found' };
+  const result = token
+    ? await peekDownloadToken(token)
+    : { ok: false, reason: 'not_found' };
 
   if (!result.ok) {
     const message = EXPIRED_MESSAGES[result.reason] ?? EXPIRED_MESSAGES.error;
@@ -50,10 +46,15 @@ export default async function DownloadPage({ params }) {
     return (
       <Section background="offWhite" spacing="lg">
         <div className="max-w-xl">
-          <h1 className="font-display text-h1 text-brand-navy">{message.heading}</h1>
+          <h1 className="font-display text-h1 text-brand-navy">
+            {message.heading}
+          </h1>
           <p className="mt-4 text-body-lg text-brand-slate">{message.body}</p>
+
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button href="/contact">Contact us</Button>
+            {result.reason !== 'revoked' && (
+              <Button href="/publications/recover">Recover purchase</Button>
+            )}
             <Button href="/publications" variant="secondary">
               Browse publications
             </Button>
@@ -63,7 +64,8 @@ export default async function DownloadPage({ params }) {
     );
   }
 
-  const { publication, expiresAt, downloadsRemaining } = result;
+  const { publication, transaction, expiresAt, downloadsRemaining } = result;
+  const extension = publication.file_path?.split('.').pop() || 'pdf';
 
   return (
     <Section background="offWhite" spacing="lg">
@@ -79,24 +81,56 @@ export default async function DownloadPage({ params }) {
         </p>
 
         <div className="mt-8 border border-slate-200 bg-white p-6">
-          <a
-            href={`/api/download/${token}`}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-none bg-brand-navy px-7 py-3 text-body font-medium text-white transition-colors duration-200 hover:bg-brand-navyDark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2"
-          >
-            Download your file
-          </a>
+          <div className="grid gap-3 text-caption text-brand-slate sm:grid-cols-2">
+            <div>
+              <span className="text-brand-muted">Amount</span>
+              <p className="mt-1 font-medium text-brand-navy">
+                {formatNaira(transaction.amount)}
+              </p>
+            </div>
+            <div>
+              <span className="text-brand-muted">Reference</span>
+              <p className="mt-1 break-all font-medium text-brand-navy">
+                {transaction.reference}
+              </p>
+            </div>
+            <div>
+              <span className="text-brand-muted">Purchased</span>
+              <p className="mt-1 font-medium text-brand-navy">
+                {formatDateTimeUTC(transaction.purchasedAt)}
+              </p>
+            </div>
+            <div>
+              <span className="text-brand-muted">Access until</span>
+              <p className="mt-1 font-medium text-brand-navy">
+                {formatDateTimeUTC(expiresAt)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <PaidDownloadButton
+              token={token}
+              fallbackFilename={`${publication.slug}.${extension}`}
+            />
+          </div>
+
           <p className="mt-4 text-caption text-brand-muted">
-            {downloadsRemaining} download{downloadsRemaining === 1 ? '' : 's'} remaining ·
-            link valid until {formatDateUTC(expiresAt)}
+            {downloadsRemaining} download
+            {downloadsRemaining === 1 ? '' : 's'} remaining in this access
+            window.
           </p>
         </div>
 
         <p className="mt-6 text-caption text-brand-muted">
-          Trouble downloading?{' '}
-          <Link href="/contact" className="text-brand-teal transition-colors hover:text-brand-navy">
-            Contact us
+          Need access later? Keep your payment reference. You can{' '}
+          <Link
+            href="/publications/recover"
+            className="text-brand-teal transition-colors hover:text-brand-navy"
+          >
+            recover your purchase
           </Link>{' '}
-          and we can help.
+          without paying again.
         </p>
       </div>
     </Section>

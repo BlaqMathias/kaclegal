@@ -28,8 +28,7 @@ const SIGNED_URL_TTL_SECONDS = 600;
  * - and `is_paid` is false.
  *
  * A paid item returns 404, not 403 — a distinct error would confirm that a paid
- * publication exists at that slug and is merely gated. Paid delivery arrives in
- * Phase 7 with its own verified, single-use token flow.
+ * publication exists at that slug and is merely gated. Paid delivery uses its own verified purchase entitlement flow.
  *
  * @param {Request} _request
  * @param {{params: {slug: string}}} context
@@ -80,21 +79,19 @@ export async function GET(_request, { params }) {
     );
   }
 
-  // Best-effort, fire-and-forget: a missed count is untidy, not unsafe, and
-  // must never turn a working download into an error for the reader. Runs as
-  // a single atomic UPDATE in Postgres (see supabase/publications.sql) rather
-  // than a read-then-write here, so concurrent downloads can't clobber each
-  // other's count.
-  supabase
-    .rpc("increment_publication_downloads", { p_slug: slug })
-    .then(({ error: incrementError }) => {
-      if (incrementError) {
-        console.error(
-          "[api/publications/read] Could not record download:",
-          incrementError,
-        );
-      }
-    });
+  // Record the free download atomically before redirecting. A metrics failure is
+  // non-fatal: readers still receive the publication.
+  const { error: incrementError } = await supabase.rpc(
+    "record_free_publication_download",
+    { p_slug: slug },
+  );
+
+  if (incrementError) {
+    console.error(
+      "[api/publications/read] Could not record free download:",
+      incrementError,
+    );
+  }
 
   return NextResponse.redirect(signedUrl, {
     // The signed URL expires, so nothing about this response may be cached.

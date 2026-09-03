@@ -20,6 +20,7 @@ import { useRef, useState } from "react";
 const STATUS_LABELS = {
   draft: "Draft — hidden from the public site",
   published: "Published — visible to everyone",
+  archived: "Archived — hidden, purchase history preserved",
 };
 
 /**
@@ -79,6 +80,10 @@ export default function PublicationForm({
     publication?.price_naira != null ? String(publication.price_naira) : "",
   );
   const [status, setStatus] = useState(publication?.status ?? "draft");
+  const availableStatuses =
+    isEdit && publication?.status === "archived"
+      ? PUBLICATION_STATUSES
+      : PUBLICATION_STATUSES.filter((value) => value !== "archived");
 
   // The file currently attached — either the one already saved on the row, or one
   // uploaded during this editing session.
@@ -716,17 +721,17 @@ export default function PublicationForm({
         </legend>
 
         <div className="space-y-3">
-          {PUBLICATION_STATUSES.map((value) => (
+          {availableStatuses.map((value) => (
             <label key={value} className="flex items-start gap-3">
               <input
                 type="checkbox"
                 name="status"
                 checked={status === value}
                 onChange={() => {
-                  // Checkbox-styled, but radio in behaviour: checking one of
-                  // the two always selects that value outright — there is no
-                  // "both unchecked" state, since a publication is always
-                  // either a draft or published, never neither.
+                  // Checkbox-styled, but radio in behaviour: checking one
+                  // option always selects it outright. Archive is exposed only
+                  // for an already archived publication so it can be restored
+                  // safely without making archive a normal edit/create state.
                   setStatus(value);
                   clearFieldError("status");
                 }}

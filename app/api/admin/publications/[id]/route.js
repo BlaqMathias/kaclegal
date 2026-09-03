@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Columns returned to the admin UI. */
 const ADMIN_COLUMNS =
-  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, created_at, updated_at";
+  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, archived_at, created_at, updated_at";
 
 /** Matches a canonical UUID, so a junk id fails fast instead of hitting Postgres. */
 const UUID_PATTERN =
@@ -156,7 +156,14 @@ export async function PUT(request, { params }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("publications")
-    .update({ ...normalized.data, updated_at: new Date().toISOString() })
+    .update({
+      ...normalized.data,
+      archived_at:
+        normalized.data.status === "archived"
+          ? existing.archived_at ?? new Date().toISOString()
+          : null,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id)
     .select(ADMIN_COLUMNS)
     .single();
@@ -203,25 +210,12 @@ export async function PUT(request, { params }) {
 }
 
 /**
- * DELETE /api/admin/publications/[id] — delete a publication, its file, and its
- * cover image.
+ * DELETE /api/admin/publications/[id]
  *
- * Refuses to delete a publication that has any transaction records — those
- * rows are the receipts behind real purchases (buyer emails, amounts,
- * download tokens all trace back to `publication_id`), and deleting the
- * publication out from under them would either cascade-delete a paying
- * customer's purchase history or leave orphaned records, depending on how
- * the foreign key is configured. Either way it's not a decision to make
- * silently from a DELETE click. The admin's path for taking a purchased item
- * off the site is to unpublish it (edit → set status to Draft) instead,
- * which the caller is told explicitly via `reason: 'has_transactions'`.
- *
- * The row goes first, then the file/image. Deleting them first would risk a
- * published row pointing at nothing if the row delete then failed.
- *
- * @param {Request} _request
- * @param {{params: {id: string}}} context
- * @returns {Promise<NextResponse>}
+ * Free publications are physically deleted immediately; they never need a
+ * financial-transaction lookup. Paid publications are soft-deleted by moving
+ * them to `archived`, preserving purchase history, download entitlements and
+ * the underlying file for buyers who still have valid access.
  */
 export async function DELETE(_request, { params }) {
   const user = await requireAdminApi();
@@ -247,53 +241,46 @@ export async function DELETE(_request, { params }) {
 
   const supabase = getSupabaseAdmin();
 
-  const { data: transactionRows, error: transactionsError } = await supabase
-    .from("transactions")
-    .select("id")
-    .eq("publication_id", id)
-    .limit(1);
+  if (existing.is_paid) {
+    const now = new Date().toISOString();
+    const { error: archiveError } = await supabase
+      .from("publications")
+      .update({
+        status: "archived",
+        archived_at: now,
+        updated_at: now,
+      })
+      .eq("id", id);
 
-  if (transactionsError) {
-    console.error(
-      "[api/admin/publications/:id] Transaction check failed:",
-      transactionsError,
-    );
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "Could not check this publication's purchase history.",
-      },
-      { status: 500 },
-    );
+    if (archiveError) {
+      console.error(
+        "[api/admin/publications/:id] Archive failed:",
+        archiveError,
+      );
+      return NextResponse.json(
+        { ok: false, error: "Could not archive the publication." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, action: "archived" });
   }
 
-  if (transactionRows && transactionRows.length > 0) {
-    return NextResponse.json(
-      {
-        ok: false,
-        reason: "has_transactions",
-        error:
-          "This publication has transaction records — edit it and unpublish instead.",
-      },
-      { status: 409 },
-    );
-  }
+  const { error: deleteError } = await supabase
+    .from("publications")
+    .delete()
+    .eq("id", id);
 
-  const { error } = await supabase.from("publications").delete().eq("id", id);
-
-  if (error) {
-    console.error("[api/admin/publications/:id] Delete failed:", error);
+  if (deleteError) {
+    console.error("[api/admin/publications/:id] Delete failed:", deleteError);
     return NextResponse.json(
       { ok: false, error: "Could not delete the publication." },
       { status: 500 },
     );
   }
 
-  // Best-effort: a leftover file is untidy, not unsafe, and must not turn a
-  // successful delete into an error for the admin. The reference check is what
-  // makes this safe if two rows ever shared a file/image.
   await removeUnreferencedFile(existing.file_path);
   await removeUnreferencedImage(existing.image_path);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, action: "deleted" });
 }

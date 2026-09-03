@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Reveal from "@/components/motion/Reveal";
 import CtaBanner from "@/components/sections/CtaBanner";
 import PublicationsBrowser from "@/components/sections/PublicationsBrowser";
@@ -97,6 +98,15 @@ export default async function PublicationsPage() {
               Books, research papers, guides and articles drawn from the work we
               do for businesses across Nigeria. Some are free to read; others
               are available to purchase.
+            </p>
+            <p className="mt-4 text-caption text-brand-muted">
+              Already purchased a paid publication?{" "}
+              <Link
+                href="/publications/recover"
+                className="font-medium text-brand-teal transition-colors hover:text-brand-navy"
+              >
+                Recover your download
+              </Link>
             </p>
           </Reveal>
         </div>

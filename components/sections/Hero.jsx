@@ -5,7 +5,6 @@ import Image from "next/image";
 export default function Hero() {
   return (
     <section className="relative overflow-visible rounded-b-[60px] sm:rounded-b-[100px] md:rounded-b-[160px] bg-white">
-      {/* Decorative net/grid line mesh, fading outward from the headline — purely visual */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-0"
@@ -20,7 +19,6 @@ export default function Hero() {
         }}
       />
 
-      {/* Decorative floating glow behind the headline — purely visual, no layout impact */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-0 hidden justify-center sm:flex">
         <div className="mt-4 h-[320px] w-[320px] rounded-full bg-brand-teal/20 blur-[100px] md:h-[420px] md:w-[420px]" />
         <div className="absolute -right-10 top-24 h-[220px] w-[220px] rounded-full bg-brand-navy/15 blur-[90px]" />

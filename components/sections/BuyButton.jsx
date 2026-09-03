@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 /**
  * BuyButton — the real Paystack checkout flow for a paid publication.
  *
- * Implements the client half of the Phase 7 payment design. The important
+ * Implements the client half of the publication payment design. The important
  * thing this component deliberately does NOT do is trust its own success
  * state: when Paystack's popup reports a successful charge, that is treated
  * as "go ask the server," not as "the purchase is done." The download page is
@@ -109,8 +109,18 @@ export default function BuyButton({ publicationId, priceLabel }) {
         // if that dashboard setting is ever touched.
         channels: ['card', 'bank_transfer', 'ussd'],
         onClose: () => {
-          // Buyer dismissed the popup without paying. Not an error — just
-          // return to the idle state so they can try again.
+          // Keep abandoned attempts visible in the ledger for support/analytics.
+          // A later signed charge.success webhook can still move this same
+          // reference to completed if the payment actually finishes.
+          fetch('/api/paystack/abandon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reference,
+              buyerEmail: verifiedEmail,
+            }),
+            keepalive: true,
+          }).catch(() => {});
           setStatus('idle');
         },
         callback: (response) => {

@@ -97,7 +97,7 @@ export default async function PublicationDetailPage({ params }) {
               Publications
             </Link>
           </p>
-          <h1 className="mt-3 font-display text-h1 text-brand-navyDark">
+          <h1 className="mt-3 font-display text-h1 text-brand-navyDark [overflow-wrap:anywhere]">
             {publication.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
@@ -110,10 +110,10 @@ export default async function PublicationDetailPage({ params }) {
       </Section>
 
       <Section background="white" spacing="md">
-        <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr]">
-          <Reveal variant="slideRight">
+        <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <Reveal variant="slideRight" className="min-w-0">
             {publication.description ? (
-              <div className="max-w-2xl space-y-4 text-body-lg text-brand-slate">
+              <div className="min-w-0 max-w-2xl space-y-4 text-body-lg text-brand-slate [overflow-wrap:anywhere]">
                 {publication.description
                   .split(/\n{2,}/)
                   .filter(Boolean)
@@ -128,8 +128,13 @@ export default async function PublicationDetailPage({ params }) {
             )}
           </Reveal>
 
-          <Reveal variant="slideLeft" delay={0.1} as="aside">
-            <div className="border border-slate-200 bg-brand-offWhite p-6">
+          <Reveal
+            variant="slideLeft"
+            delay={0.1}
+            as="aside"
+            className="min-w-0"
+          >
+            <div className="min-w-0 border border-slate-200 bg-brand-offWhite p-6 [overflow-wrap:anywhere]">
               <p className="text-caption font-semibold uppercase tracking-[0.16em] text-brand-muted">
                 Price
               </p>
@@ -143,8 +148,9 @@ export default async function PublicationDetailPage({ params }) {
                 />
               </div>
               <p className="mt-3 text-caption text-brand-muted">
-                Secure payment via Paystack. Your download link arrives
-                immediately after payment is confirmed.
+                Secure payment via Paystack. Your download page opens
+                immediately after payment is confirmed, and a payment receipt is
+                sent to your email.
               </p>
               <div className="mt-4">
                 <Button href="/contact" variant="secondary" size="sm" fullWidth>
@@ -154,6 +160,16 @@ export default async function PublicationDetailPage({ params }) {
             </div>
 
             <p className="mt-6 text-caption text-brand-muted">
+              Already purchased this or another publication?{" "}
+              <Link
+                href="/publications/recover"
+                className="transition-colors hover:text-brand-teal"
+              >
+                Recover your purchase
+              </Link>
+              .
+            </p>
+            <p className="mt-3 text-caption text-brand-muted">
               <Link
                 href="/publications"
                 className="transition-colors hover:text-brand-teal"
