@@ -56,7 +56,7 @@ export default function TeamProfilePage({ params }) {
     notFound();
   }
 
-  const { name, specialties, bio, photo, practiceAreaSlugs } = member;
+  const { name, role, specialties, bio, photo, practiceAreaSlugs } = member;
 
   // Resolve only the practice-area slugs that map to real pages; skip any that
   // don't (defensive — content already lists valid slugs only).
@@ -119,6 +119,9 @@ export default function TeamProfilePage({ params }) {
                 Our Team
               </p>
               <h1 className="mt-3 font-display text-hero text-white">{name}</h1>
+              <p className="mt-3 text-body font-semibold text-brand-ice">
+                {role}
+              </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
                 {specialties.map((specialty) => (
                   <Badge key={specialty} variant="teal">
@@ -127,9 +130,11 @@ export default function TeamProfilePage({ params }) {
                 ))}
               </div>
 
-              <p className="mx-auto mt-6 max-w-2xl text-body-lg text-white/80 md:mx-0">
-                {bio}
-              </p>
+              <div className="mx-auto mt-6 max-w-2xl space-y-4 text-body text-white/80 md:mx-0">
+                {bio.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
 
               {linkedAreas.length > 0 && (
                 <div className="mt-8">

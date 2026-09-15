@@ -54,7 +54,7 @@ const regulatoryCompliance = {
         "We provide legal and regulatory support in relation to NAFDAC product registration and approvals, including regulatory requirements applicable to food, drugs, cosmetics, medical devices and other regulated products, as well as renewal of existing licenses.",
     },
   ],
-  lawyers: ["Esioh Nwokolo"],
+  lawyers: ["Koko Asuquo"],
 };
 
 export default regulatoryCompliance;

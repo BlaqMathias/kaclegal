@@ -44,7 +44,7 @@ const companySecretarial = {
         'We advise on best practices for corporate governance, helping businesses establish effective policies and procedures that promote transparency, accountability, and compliance with legal requirements.',
     },
   ],
-  lawyers: ['Koko Asuquo', 'Esioh Nwokolo'],
+  lawyers: ['Koko Asuquo', 'Donald S. Essien, Esq.', 'Nyebuk Johnson'],
 };
 
 export default companySecretarial;

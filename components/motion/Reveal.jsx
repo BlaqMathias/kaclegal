@@ -2,22 +2,6 @@
 
 import { motion } from "framer-motion";
 
-/**
- * Named animation variants for `Reveal`. Each has a `hidden` (pre-scroll)
- * and `visible` (in-view) state that framer-motion tweens between.
- *
- * - fadeUp / fadeDown — the workhorse: content eases in while travelling a
- *   short distance vertically.
- * - slideLeft — enters travelling right-to-left (use for content that should
- *   feel like it's arriving from the right edge).
- * - slideRight — enters travelling left-to-right (arriving from the left edge).
- * - appear — a plain opacity fade, no movement. For content where motion
- *   would be distracting (e.g. dense text blocks).
- * - zoom — scales up slightly while fading in.
- * - morph — a more dramatic entrance combining scale, a rounded-corner
- *   "unfold", and a blur that resolves — reserved for a few hero-ish moments,
- *   not everyday content.
- */
 const VARIANTS = {
   fadeUp: {
     hidden: { opacity: 0, y: 36 },

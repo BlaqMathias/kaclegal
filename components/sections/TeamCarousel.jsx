@@ -13,10 +13,7 @@ const AUTO_ADVANCE_MS = 4500;
 /** Minimum horizontal drag distance (px) to count as a swipe. */
 const SWIPE_THRESHOLD_PX = 40;
 
-/**
- * Photos used here are homepage-specific — distinct from the plain headshots
- * used on /team — so they're looked up by a separate naming convention.
- */
+/** Resolve the shared team portrait for the homepage carousel. */
 function carouselPhotoFor(slug) {
   return `/images/team/${slug}.webp`;
 }
@@ -156,6 +153,14 @@ export default function TeamCarousel() {
                     sizes="224px"
                     className="object-cover"
                   />
+                  <span className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-brand-navyDark via-brand-navyDark/85 to-transparent px-5 pb-5 pt-14 text-left">
+                    <span className="block font-display text-lg font-semibold text-white">
+                      {member.name}
+                    </span>
+                    <span className="mt-1 block text-sm text-white/75">
+                      {member.role}
+                    </span>
+                  </span>
                 </button>
               );
             })}

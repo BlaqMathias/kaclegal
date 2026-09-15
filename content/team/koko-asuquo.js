@@ -1,19 +1,28 @@
-/**
- * Koko Asuquo — team member profile content.
- * Canonical data source for the team hub and the dynamic profile page. Copy is
- * used verbatim from the firm profile. No formal title is used — name and
- * specialties only.
- *
- * @type {import('./index').TeamMember}
- */
+/** @type {import('./index').TeamMember} */
 const kokoAsuquo = {
   slug: 'koko-asuquo',
   name: 'Koko Asuquo',
-  specialties: ['Company Secretarial', 'Real Estate', 'Data Privacy'],
+  role: 'Managing Partner',
+  specialties: [
+    'Corporate & Commercial Law',
+    'Contracts & Negotiation',
+    'Business Advisory',
+  ],
   photo: '/images/team/koko-asuquo.webp',
-  bio: "Koko Asuquo is a legal practitioner with well over five years of experience in dispute resolution, debt recovery, property transactions, and regulatory compliance. He holds an LL.B from Kwame Nkrumah University of Science and Technology and a B.L from the Nigerian Law School, and is a member of the Nigeria Bar Association. He has successfully recovered significant sums for multinational corporations, government agencies, and financial institutions, and leads KAC's work in Company Secretarial, Real Estate, and Data Privacy matters.",
-  // Cross-links to real Phase 3 practice-area pages only.
-  practiceAreaSlugs: ['company-secretarial', 'real-estate', 'data-privacy'],
+  bio: [
+    'Koko Asuquo is the Managing Partner of Koko Asuquo Chambers (KAC Legal) and a Nigerian legal practitioner with over a decade of post-qualification experience. His practice focuses on providing clear, commercially informed and practical legal solutions to individuals, businesses, investors and corporate organisations operating in Nigeria.',
+    'His experience spans commercial and corporate law, contract drafting and negotiation, regulatory compliance, real estate and property transactions, corporate governance, employment matters, dispute management and legal advisory services. He regularly advises on commercial transactions, with particular emphasis on identifying legal and commercial risks and developing effective contractual protections.',
+    "A significant part of his practice involves the drafting, review and negotiation of commercial agreements. His approach considers not only the legal terms of a transaction, but also how those terms will operate in practice, how risks should be allocated, and how a client's interests can be protected while keeping the transaction commercially workable.",
+    'Beyond private practice, he is committed to legal education and public understanding of the law through legal writing and initiatives such as his Know Your Rights Series, which seeks to make legal concepts more accessible to the public.',
+    "As Managing Partner, Koko leads KAC Legal with an emphasis on professionalism, responsiveness, rigorous legal analysis, innovation and commercially practical advice. His legal philosophy is that a lawyer's role goes beyond identifying legal problems; it requires understanding the client's objectives, anticipating risks and developing practical solutions that enable clients to move forward with confidence.",
+  ],
+  practiceAreaSlugs: [
+    'commercial-law',
+    'company-secretarial',
+    'real-estate',
+    'regulatory-compliance',
+    'employment-labour-law',
+  ],
 };
 
 export default kokoAsuquo;

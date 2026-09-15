@@ -57,20 +57,20 @@ export const metadata = {
   },
   icons: { icon: "/images/logo/kac-icon.png" },
   description:
-    "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+    "Koko Asuquo Chambers combines sound legal expertise, commercial insight and technology to serve businesses and individuals across Nigeria.",
   openGraph: {
     type: "website",
     siteName: "Koko Asuquo Chambers",
     title: "Koko Asuquo Chambers (KAC) - Business & Corporate Legal Service",
     description:
-      "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+      "Koko Asuquo Chambers combines sound legal expertise, commercial insight and technology to serve businesses and individuals across Nigeria.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary",
     title: "Koko Asuquo Chambers (KAC) - Business & Corporate Legal Service",
     description:
-      "Koko Asuquo Chambers (KAC) is a modern commercial law firm with offices in Lagos and Uyo, providing business and corporate legal services.",
+      "Koko Asuquo Chambers combines sound legal expertise, commercial insight and technology to serve businesses and individuals across Nigeria.",
   },
 };
 export const viewport = {

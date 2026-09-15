@@ -16,8 +16,7 @@ export const metadata = {
 /**
  * Team hub — a centered dark header, a grid of profile cards (one per
  * practitioner, each linking to their /team/[slug] profile), and a closing
- * CTA banner. Data comes from the shared /content/team source. No filtering
- * needed at three people.
+ * CTA banner. Data comes from the shared /content/team source.
  */
 export default function TeamPage() {
   return (
@@ -38,7 +37,7 @@ export default function TeamPage() {
       </Section>
 
       <Section background="white" spacing="md">
-        <RevealStagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <RevealStagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {team.map((member) => (
             <RevealItem key={member.slug} variant="fadeUp">
               <Card
@@ -60,6 +59,9 @@ export default function TeamPage() {
                   <h2 className="font-display text-h3 text-brand-navy">
                     {member.name}
                   </h2>
+                  <p className="mt-1 text-sm font-medium text-brand-muted">
+                    {member.role}
+                  </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {member.specialties.map((specialty) => (
                       <Badge key={specialty} variant="teal">

@@ -5,21 +5,26 @@ import Reveal from "@/components/motion/Reveal";
 /**
  * Organisations the firm has worked with.
  *
- * Each entry maps a display name to a logo file the firm supplies at
- * `public/images/clients/<file>.png` (transparent PNG or SVG recommended).
- * Add/rename files to match `file` below — order here is the display order.
+ * Each entry maps a display name to a supplied logo under
+ * `public/images/clients`. The filename includes its extension so compressed
+ * WEBP logos can live alongside the existing PNG assets.
  *
- * @type {{ name: string, file: string }[]}
+ * @type {{ name: string, image: string }[]}
  */
 const clients = [
-  { name: "Saroafrica International Ltd", file: "saroafrica" },
-  { name: "Dew of Hermon Montessori School", file: "dew-of-hermon" },
-  { name: "Ray's On It Sha Entertainment", file: "rays-on-it-sha" },
-  { name: "Decade Homes", file: "decade-homes" },
-  { name: "Tomi Aina Beauty", file: "tomi-aina-beauty" },
-  { name: "Zijela ICT", file: "zijela-ict" },
-  { name: "Opulence Realty", file: "opulence-realty" },
-  { name: "VFL Iconic Properties Ltd", file: "vfl-iconic-properties" },
+  { name: "Dew of Hermon Montessori School", image: "dew-of-hermon.png" },
+  { name: "Ray's On It Sha Entertainment", image: "rays-on-it-sha.png" },
+  { name: "Decade Homes", image: "decade-homes.png" },
+  { name: "Tomi Aina Beauty", image: "tomi-aina-beauty.png" },
+  { name: "Zijela ICT", image: "zijela-ict.png" },
+  { name: "Opulence Realty", image: "opulence-realty.png" },
+  { name: "VFL Iconic Properties Ltd", image: "vfl-iconic-properties.png" },
+  { name: "Silver Elevators Nigeria", image: "silver-elevators-nigeria.webp" },
+  { name: "Allel Beauty", image: "allel-beauty.webp" },
+  { name: "Anirock Sam Ltd", image: "anirock-sam-ltd.webp" },
+  { name: "Gaale Beauty", image: "gaale-beauty.webp" },
+  { name: "Kaolinite Enterprise", image: "kaolinite-enterprise.webp" },
+  { name: "Jite Projects", image: "jite-projects.webp" },
 ];
 
 // Rendered twice back-to-back so the -50% marquee scroll loops seamlessly.
@@ -65,13 +70,13 @@ export default function TrustBar() {
             const isDuplicate = index >= clients.length;
             return (
               <div
-                key={`${client.file}-${index}`}
+                key={`${client.image}-${index}`}
                 className="mr-10 flex h-16 w-44 shrink-0 items-center justify-center sm:mr-16"
                 aria-hidden={isDuplicate ? true : undefined}
               >
                 <div className="relative h-full w-full">
                   <Image
-                    src={`/images/clients/${client.file}.png`}
+                    src={`/images/clients/${client.image}`}
                     alt={isDuplicate ? "" : client.name}
                     fill
                     sizes="176px"

@@ -91,8 +91,9 @@ export default function AboutPage() {
               What Do <span className="text-brand-navyDark"> We Do</span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-body text-brand-muted">
-              We pair commercial legal expertise with technology to help
-              businesses and individuals move forward with clarity.
+              Koko Asuquo Chambers pairs commercial legal expertise with
+              technology to help businesses and individuals move forward with
+              clarity.
             </p>
           </Reveal>
         </div>

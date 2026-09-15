@@ -44,7 +44,7 @@ const commercialLaw = {
         'We identify potential legal and contractual risks in commercial arrangements and advise clients on appropriate measures to protect their interests and minimise exposure.',
     },
   ],
-  lawyers: [],
+  lawyers: ['Koko Asuquo', 'Donald S. Essien, Esq.'],
 };
 
 export default commercialLaw;

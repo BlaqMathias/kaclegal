@@ -39,7 +39,7 @@ const dataPrivacy = {
         "In cases of data privacy disputes or litigation, our experienced team of legal practitioners provide robust representation to protect our clients' interests.",
     },
   ],
-  lawyers: ['Koko Asuquo'],
+  lawyers: ['Koko Asuquo', 'H. M. Joseph'],
 };
 
 export default dataPrivacy;

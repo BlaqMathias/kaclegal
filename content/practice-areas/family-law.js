@@ -59,7 +59,7 @@ const familyLaw = {
         'We assist clients with modifying existing court orders related to custody, support, and visitation, as well as enforcing these orders when necessary.',
     },
   ],
-  lawyers: [],
+  lawyers: ['Donald S. Essien, Esq.'],
 };
 
 export default familyLaw;

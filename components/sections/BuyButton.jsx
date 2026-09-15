@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 /**
  * BuyButton — the real Paystack checkout flow for a paid publication.
@@ -26,9 +26,9 @@ import Input from '@/components/ui/Input';
  */
 export default function BuyButton({ publicationId, priceLabel }) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | submitting | verifying | error
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | submitting | verifying | error
+  const [error, setError] = useState("");
 
   /**
    * Load Paystack's inline Popup script exactly once, however many times
@@ -46,11 +46,12 @@ export default function BuyButton({ publicationId, priceLabel }) {
     }
 
     window.__paystackScriptPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://js.paystack.co/v1/inline.js';
+      const script = document.createElement("script");
+      script.src = "https://js.paystack.co/v1/inline.js";
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Could not load the payment popup.'));
+      script.onerror = () =>
+        reject(new Error("Could not load the payment popup."));
       document.body.appendChild(script);
     });
 
@@ -62,29 +63,32 @@ export default function BuyButton({ publicationId, priceLabel }) {
    */
   async function handleSubmit(formEvent) {
     formEvent.preventDefault();
-    setError('');
+    setError("");
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setError('Enter your email address to continue.');
+      setError("Enter your email address to continue.");
       return;
     }
 
-    setStatus('submitting');
+    setStatus("submitting");
 
     try {
       await loadPaystackScript();
 
-      const initiateResponse = await fetch('/api/paystack/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const initiateResponse = await fetch("/api/paystack/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicationId, buyerEmail: trimmedEmail }),
       });
       const initiateData = await initiateResponse.json().catch(() => null);
 
       if (!initiateResponse.ok || !initiateData?.ok) {
-        setError(initiateData?.error ?? 'Could not start this purchase. Please try again.');
-        setStatus('error');
+        setError(
+          initiateData?.error ??
+            "Could not start this purchase. Please try again.",
+        );
+        setStatus("error");
         return;
       }
 
@@ -92,9 +96,13 @@ export default function BuyButton({ publicationId, priceLabel }) {
       const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
 
       if (!publicKey) {
-        console.error('[BuyButton] NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is not set.');
-        setError('Payment is not available right now. Please contact us to purchase.');
-        setStatus('error');
+        console.error(
+          "[BuyButton] NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is not set.",
+        );
+        setError(
+          "Payment is not available right now. Please contact us to purchase.",
+        );
+        setStatus("error");
         return;
       }
 
@@ -102,26 +110,20 @@ export default function BuyButton({ publicationId, priceLabel }) {
         key: publicKey,
         email: verifiedEmail,
         amount: amountKobo,
-        currency: 'NGN',
+        currency: "NGN",
         ref: reference,
-        // Explicitly requested rather than left to the Paystack dashboard's
-        // channel settings, so what buyers see here doesn't silently change
-        // if that dashboard setting is ever touched.
-        channels: ['card', 'bank_transfer', 'ussd'],
+        channels: ["card", "bank_transfer", "ussd"],
         onClose: () => {
-          // Keep abandoned attempts visible in the ledger for support/analytics.
-          // A later signed charge.success webhook can still move this same
-          // reference to completed if the payment actually finishes.
-          fetch('/api/paystack/abandon', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          fetch("/api/paystack/abandon", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               reference,
               buyerEmail: verifiedEmail,
             }),
             keepalive: true,
           }).catch(() => {});
-          setStatus('idle');
+          setStatus("idle");
         },
         callback: (response) => {
           // A client-side "success" callback — NOT trusted as proof of
@@ -133,9 +135,9 @@ export default function BuyButton({ publicationId, priceLabel }) {
 
       handler.openIframe();
     } catch (caughtError) {
-      console.error('[BuyButton] Could not start checkout:', caughtError);
-      setError('Could not start this purchase. Please try again.');
-      setStatus('error');
+      console.error("[BuyButton] Could not start checkout:", caughtError);
+      setError("Could not start this purchase. Please try again.");
+      setStatus("error");
     }
   }
 
@@ -143,12 +145,12 @@ export default function BuyButton({ publicationId, priceLabel }) {
    * @param {string} reference
    */
   async function verifyPayment(reference) {
-    setStatus('verifying');
+    setStatus("verifying");
 
     try {
-      const verifyResponse = await fetch('/api/paystack/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const verifyResponse = await fetch("/api/paystack/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference }),
       });
       const verifyData = await verifyResponse.json().catch(() => null);
@@ -156,23 +158,23 @@ export default function BuyButton({ publicationId, priceLabel }) {
       if (!verifyResponse.ok || !verifyData?.ok) {
         setError(
           verifyData?.error ??
-            'We received a payment response but could not confirm it. If you were charged, contact us and we will sort it out.',
+            "We received a payment response but could not confirm it. If you were charged, contact us and we will sort it out.",
         );
-        setStatus('error');
+        setStatus("error");
         return;
       }
 
       router.push(`/download/${verifyData.token}`);
     } catch (caughtError) {
-      console.error('[BuyButton] Verification request failed:', caughtError);
+      console.error("[BuyButton] Verification request failed:", caughtError);
       setError(
-        'We could not confirm your payment just now. If you were charged, contact us and we will sort it out.',
+        "We could not confirm your payment just now. If you were charged, contact us and we will sort it out.",
       );
-      setStatus('error');
+      setStatus("error");
     }
   }
 
-  const isBusy = status === 'submitting' || status === 'verifying';
+  const isBusy = status === "submitting" || status === "verifying";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -188,7 +190,9 @@ export default function BuyButton({ publicationId, priceLabel }) {
       />
 
       <Button type="submit" size="lg" fullWidth loading={isBusy}>
-        {status === 'verifying' ? 'Confirming payment\u2026' : `Buy \u2014 ${priceLabel}`}
+        {status === "verifying"
+          ? "Confirming payment\u2026"
+          : `Buy \u2014 ${priceLabel}`}
       </Button>
 
       {error && (

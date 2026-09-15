@@ -44,7 +44,7 @@ const employmentLabourLaw = {
         'We assist clients in addressing employment disputes through negotiation, mediation and other appropriate dispute resolution mechanisms, as well as representation in litigation where necessary.',
     },
   ],
-  lawyers: [],
+  lawyers: ['Koko Asuquo'],
 };
 
 export default employmentLabourLaw;

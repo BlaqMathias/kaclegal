@@ -1,70 +1,70 @@
-import AdminShell from '@/components/admin/AdminShell';
-import PublicationStats from '@/components/admin/PublicationStats';
-import PublicationsGrid from '@/components/admin/PublicationsGrid';
-import Button from '@/components/ui/Button';
-import { requireAdminPage } from '@/lib/auth';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import AdminShell from "@/components/admin/AdminShell";
+import PublicationStats from "@/components/admin/PublicationStats";
+import PublicationsGrid from "@/components/admin/PublicationsGrid";
+import { requireAdminPage } from "@/lib/auth";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
 export const metadata = {
-  title: 'Publications',
+  title: "Publications",
   robots: { index: false, follow: false, nocache: true },
 };
 
 export default async function AdminPublicationsPage() {
-  const user = await requireAdminPage('/admin/publications');
+  const user = await requireAdminPage("/admin/publications");
   const supabase = getSupabaseAdmin();
 
   const [publicationsResult, metricsResult] = await Promise.all([
     supabase
-      .from('publications')
+      .from("publications")
       .select(
-        'id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, archived_at, created_at, updated_at',
+        "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, archived_at, created_at, updated_at",
       )
-      .order('created_at', { ascending: false }),
-    supabase.rpc('get_publication_admin_metrics'),
+      .order("created_at", { ascending: false }),
+
+    supabase.rpc("get_publication_admin_metrics"),
   ]);
 
   const { data: publications, error } = publicationsResult;
+
   if (error) {
-    console.error('[admin/publications] Could not load publications:', error);
+    console.error("[admin/publications] Could not load publications:", error);
   }
+
   if (metricsResult.error) {
     console.error(
-      '[admin/publications] Could not load publication metrics:',
+      "[admin/publications] Could not load publication metrics:",
       metricsResult.error,
     );
   }
 
   const rows = publications ?? [];
+
   const metricRow = Array.isArray(metricsResult.data)
     ? metricsResult.data[0]
     : metricsResult.data;
 
   const metrics = {
     totalPublications: Number(metricRow?.total_publications ?? rows.length),
+
     freePublications: Number(
-      metricRow?.free_publications ??
-        rows.filter((row) => !row.is_paid).length,
+      metricRow?.free_publications ?? rows.filter((row) => !row.is_paid).length,
     ),
+
     paidPublications: Number(
-      metricRow?.paid_publications ??
-        rows.filter((row) => row.is_paid).length,
+      metricRow?.paid_publications ?? rows.filter((row) => row.is_paid).length,
     ),
+
     totalFreeDownloads: Number(metricRow?.free_downloads ?? 0),
     totalRevenue: Number(metricRow?.total_revenue ?? 0),
     salesThisMonth: Number(metricRow?.sales_this_month ?? 0),
     downloadsThisMonth: Number(metricRow?.downloads_this_month ?? 0),
-    bestSeller: metricRow?.best_seller ?? '—',
+    bestSeller: metricRow?.best_seller ?? "—",
   };
 
   return (
-    <AdminShell
-      email={user.email}
-      title="Publications"
-      description="Everything in the firm's library. Drafts and archived paid publications stay hidden from the public site."
-      actions={<Button href="/admin/publications/new">Add publication</Button>}
-    >
+    <AdminShell email={user.email} title="Publications">
       <PublicationStats
         totalPublications={metrics.totalPublications}
         freePublications={metrics.freePublications}

@@ -20,6 +20,7 @@ import Link from "next/link";
  * @param {string} props.title - Page heading.
  * @param {string} [props.description] - Optional sub-heading copy.
  * @param {React.ReactNode} [props.actions] - Buttons/links rendered beside the heading.
+ * @param {boolean} [props.centered=false] - Centers the page heading and content column.
  * @param {React.ReactNode} props.children - Page content.
  */
 export default function AdminShell({
@@ -27,6 +28,7 @@ export default function AdminShell({
   title,
   description,
   actions,
+  centered = false,
   children,
 }) {
   return (
@@ -58,11 +60,22 @@ export default function AdminShell({
       </header>
 
       <div className="container-kac py-10 md:py-14">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div
+          className={[
+            "flex flex-col gap-4",
+            centered
+              ? "items-center text-center"
+              : "sm:flex-row sm:items-end sm:justify-between",
+          ].join(" ")}
+        >
+          <div className={centered ? "max-w-2xl" : ""}>
             <h1 className="text-h1 text-white">{title}</h1>
             {description && (
-              <p className="mt-2 max-w-2xl text-body text-white/70">
+              <p
+                className={`mt-2 max-w-2xl text-body text-white/70 ${
+                  centered ? "mx-auto" : ""
+                }`}
+              >
                 {description}
               </p>
             )}
@@ -72,7 +85,9 @@ export default function AdminShell({
           )}
         </div>
 
-        <div className="mt-8">{children}</div>
+        <div className={`mt-8 ${centered ? "mx-auto max-w-2xl" : ""}`}>
+          {children}
+        </div>
       </div>
     </div>
   );

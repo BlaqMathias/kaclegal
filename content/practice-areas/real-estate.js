@@ -49,7 +49,7 @@ const realEstate = {
         'Our team provides guidance on property management agreements and compliance with landlord-tenant laws, helping clients effectively manage their real estate assets.',
     },
   ],
-  lawyers: ['Koko Asuquo'],
+  lawyers: ['Koko Asuquo', 'Nyebuk Johnson', 'H. M. Joseph'],
 };
 
 export default realEstate;

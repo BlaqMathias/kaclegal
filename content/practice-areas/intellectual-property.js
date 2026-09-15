@@ -49,7 +49,7 @@ const intellectualProperty = {
         'Our team conducts thorough IP due diligence for mergers, acquisitions, and investments, assessing the value and risks associated with intellectual property assets.',
     },
   ],
-  lawyers: ['Chima Ochi'],
+  lawyers: ['H. M. Joseph'],
 };
 
 export default intellectualProperty;

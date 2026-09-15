@@ -431,7 +431,11 @@ export default function PublicationForm({
     fileLabel || (filePath ? filePath.split("/").pop() : "");
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="max-w-2xl space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="mx-auto max-w-2xl space-y-6 text-left"
+    >
       <Input
         label="Title"
         id="title"
@@ -441,11 +445,12 @@ export default function PublicationForm({
         onChange={handleTitleChange}
         error={fieldErrors.title}
         placeholder="Data Protection Compliance for Nigerian Startups"
+        wrapperClassName="[&>label]:!text-white"
       />
 
       {isEdit ? (
         <div>
-          <span className="mb-1.5 block text-caption font-medium text-brand-slate">
+          <span className="mb-1.5 block text-caption font-medium text-white">
             Public URL
           </span>
           <p className="border border-slate-200 bg-brand-offWhite px-3.5 py-2.5 text-body text-brand-muted">
@@ -470,6 +475,7 @@ export default function PublicationForm({
           onBlur={(event) => setSlug(slugify(event.target.value))}
           error={fieldErrors.slug}
           placeholder="data-protection-compliance"
+          wrapperClassName="[&>label]:!text-white"
         />
       )}
 
@@ -484,6 +490,7 @@ export default function PublicationForm({
           clearFieldError("type");
         }}
         error={fieldErrors.type}
+        wrapperClassName="[&>label]:!text-white"
       >
         <option value="" disabled>
           Choose a type
@@ -498,7 +505,7 @@ export default function PublicationForm({
       <div>
         <label
           htmlFor="description"
-          className="mb-1.5 block text-caption font-medium text-brand-slate"
+          className="mb-1.5 block text-caption font-medium text-white"
         >
           Description
         </label>
@@ -529,128 +536,132 @@ export default function PublicationForm({
       </div>
 
       {/* Pricing */}
-      <fieldset className="border border-slate-200 bg-white p-5">
-        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+      <fieldset className="min-w-0">
+        <legend className="mb-1.5 block w-full text-caption font-medium text-white">
           Pricing
         </legend>
 
-        <label className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            checked={isPaid}
-            onChange={(event) => {
-              setIsPaid(event.target.checked);
-              clearFieldError("price");
-            }}
-            className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
-          />
-          <span>
-            <span className="block text-body font-medium text-brand-slate">
-              This is a paid publication
-            </span>
-            <span className="mt-0.5 block text-caption text-brand-muted">
-              Leave unchecked to offer it free. Free items can be read directly
-              from the site.
-            </span>
-          </span>
-        </label>
-
-        {isPaid && (
-          <div className="mt-5">
-            <Input
-              label="Price (Naira)"
-              id="price"
-              name="price"
-              type="number"
-              min="1"
-              step="1"
-              inputMode="numeric"
-              required
-              value={price}
+        <div className="border border-slate-200 bg-white p-5">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              checked={isPaid}
               onChange={(event) => {
-                setPrice(event.target.value);
+                setIsPaid(event.target.checked);
                 clearFieldError("price");
               }}
-              error={fieldErrors.price}
-              placeholder="15000"
+              className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
             />
-            <p className="mt-1.5 text-caption text-brand-muted">
-              Whole Naira, no kobo. Payment is wired up in the next phase.
-            </p>
-          </div>
-        )}
+            <span>
+              <span className="block text-body font-medium text-brand-slate">
+                This is a paid publication
+              </span>
+              <span className="mt-0.5 block text-caption text-brand-muted">
+                Leave unchecked to offer it free. Free items can be read
+                directly from the site.
+              </span>
+            </span>
+          </label>
+
+          {isPaid && (
+            <div className="mt-5">
+              <Input
+                label="Price (Naira)"
+                id="price"
+                name="price"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                required
+                value={price}
+                onChange={(event) => {
+                  setPrice(event.target.value);
+                  clearFieldError("price");
+                }}
+                error={fieldErrors.price}
+                placeholder="15000"
+              />
+              <p className="mt-1.5 text-caption text-brand-muted">
+                Whole Naira, no kobo. Payment is wired up in the next phase.
+              </p>
+            </div>
+          )}
+        </div>
       </fieldset>
 
       {/* File */}
-      <fieldset className="border border-slate-200 bg-white p-5">
-        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+      <fieldset className="min-w-0">
+        <legend className="mb-1.5 block w-full text-caption font-medium text-white">
           File
         </legend>
 
-        <label
-          htmlFor="file"
-          className="mb-1.5 block text-caption font-medium text-brand-slate"
-        >
-          {filePath ? "Replace file" : "Upload file"}
-        </label>
-        <input
-          ref={fileInputRef}
-          id="file"
-          name="file"
-          type="file"
-          accept={UPLOAD_ACCEPT}
-          onChange={handleFileChange}
-          disabled={uploading}
-          aria-invalid={fieldErrors.file ? true : undefined}
-          aria-describedby={fieldErrors.file ? "file-error" : "file-hint"}
-          className="block w-full text-caption text-brand-slate file:mr-4 file:rounded-none file:border-0 file:bg-brand-navy file:px-4 file:py-2.5 file:text-caption file:font-medium file:text-white hover:file:bg-brand-navyDark disabled:opacity-60"
-        />
+        <div className="border border-slate-200 bg-white p-5">
+          <label
+            htmlFor="file"
+            className="mb-1.5 block text-caption font-medium text-brand-slate"
+          >
+            {filePath ? "Replace file" : "Upload file"}
+          </label>
+          <input
+            ref={fileInputRef}
+            id="file"
+            name="file"
+            type="file"
+            accept={UPLOAD_ACCEPT}
+            onChange={handleFileChange}
+            disabled={uploading}
+            aria-invalid={fieldErrors.file ? true : undefined}
+            aria-describedby={fieldErrors.file ? "file-error" : "file-hint"}
+            className="block w-full text-caption text-brand-slate file:mr-4 file:rounded-none file:border-0 file:bg-brand-navy file:px-4 file:py-2.5 file:text-caption file:font-medium file:text-white hover:file:bg-brand-navyDark disabled:opacity-60"
+          />
 
-        <p id="file-hint" className="mt-2 text-caption text-brand-muted">
-          PDF, EPUB, DOC or DOCX, up to {formatBytes(MAX_UPLOAD_BYTES)}. Stored
-          privately — never linked publicly.
-        </p>
+          <p id="file-hint" className="mt-2 text-caption text-brand-muted">
+            PDF, EPUB, DOC or DOCX, up to {formatBytes(MAX_UPLOAD_BYTES)}.
+            Stored privately — never linked publicly.
+          </p>
 
-        {uploading && (
-          <p className="mt-2 text-caption text-brand-navy">Uploading…</p>
-        )}
+          {uploading && (
+            <p className="mt-2 text-caption text-brand-navy">Uploading…</p>
+          )}
 
-        {!uploading && attachedFileName && (
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <p className="text-caption text-brand-success">
-              Attached: {attachedFileName}
+          {!uploading && attachedFileName && (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <p className="text-caption text-brand-success">
+                Attached: {attachedFileName}
+              </p>
+              <button
+                type="button"
+                onClick={handleRemoveFile}
+                className="text-caption font-medium text-brand-error underline decoration-1 underline-offset-2 transition-opacity hover:opacity-70"
+              >
+                Remove file
+              </button>
+            </div>
+          )}
+
+          {!uploading && !filePath && (
+            <p className="mt-2 text-caption text-brand-muted">
+              No file attached yet. You can save this as a draft and add the
+              file later.
             </p>
-            <button
-              type="button"
-              onClick={handleRemoveFile}
-              className="text-caption font-medium text-brand-error underline decoration-1 underline-offset-2 transition-opacity hover:opacity-70"
-            >
-              Remove file
-            </button>
-          </div>
-        )}
+          )}
 
-        {!uploading && !filePath && (
-          <p className="mt-2 text-caption text-brand-muted">
-            No file attached yet. You can save this as a draft and add the file
-            later.
-          </p>
-        )}
-
-        {fieldErrors.file && (
-          <p id="file-error" className="mt-2 text-caption text-brand-error">
-            {fieldErrors.file}
-          </p>
-        )}
+          {fieldErrors.file && (
+            <p id="file-error" className="mt-2 text-caption text-brand-error">
+              {fieldErrors.file}
+            </p>
+          )}
+        </div>
       </fieldset>
 
       {/* Cover image */}
-      <fieldset className="border border-slate-200 bg-white p-5">
-        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+      <fieldset className="min-w-0">
+        <legend className="mb-1.5 block w-full text-caption font-medium text-white">
           Cover image
         </legend>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-4 border border-slate-200 bg-white p-5 sm:flex-row sm:items-start">
           {imagePath && (
             // Plain <img>, not next/image: this is an admin-only preview of a
             // file that was just written to public/images/publicationUploads,
@@ -715,40 +726,42 @@ export default function PublicationForm({
         </div>
       </fieldset>
 
-      <fieldset className="border border-slate-200 bg-white p-5">
-        <legend className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-brand-muted">
+      <fieldset className="min-w-0">
+        <legend className="mb-1.5 block w-full text-caption font-medium text-white">
           Status
         </legend>
 
-        <div className="space-y-3">
-          {availableStatuses.map((value) => (
-            <label key={value} className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                name="status"
-                checked={status === value}
-                onChange={() => {
-                  // Checkbox-styled, but radio in behaviour: checking one
-                  // option always selects it outright. Archive is exposed only
-                  // for an already archived publication so it can be restored
-                  // safely without making archive a normal edit/create state.
-                  setStatus(value);
-                  clearFieldError("status");
-                }}
-                className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
-              />
-              <span className="block text-body font-medium text-brand-slate">
-                {STATUS_LABELS[value] ?? value}
-              </span>
-            </label>
-          ))}
-        </div>
+        <div className="border border-slate-200 bg-white p-5">
+          <div className="space-y-3">
+            {availableStatuses.map((value) => (
+              <label key={value} className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  name="status"
+                  checked={status === value}
+                  onChange={() => {
+                    // Checkbox-styled, but radio in behaviour: checking one
+                    // option always selects it outright. Archive is exposed only
+                    // for an already archived publication so it can be restored
+                    // safely without making archive a normal edit/create state.
+                    setStatus(value);
+                    clearFieldError("status");
+                  }}
+                  className="mt-1 h-4 w-4 rounded-none border-slate-300 text-brand-navy focus:ring-brand-navy/30"
+                />
+                <span className="block text-body font-medium text-brand-slate">
+                  {STATUS_LABELS[value] ?? value}
+                </span>
+              </label>
+            ))}
+          </div>
 
-        {fieldErrors.status && (
-          <p className="mt-2 text-caption text-brand-error">
-            {fieldErrors.status}
-          </p>
-        )}
+          {fieldErrors.status && (
+            <p className="mt-2 text-caption text-brand-error">
+              {fieldErrors.status}
+            </p>
+          )}
+        </div>
       </fieldset>
 
       {formError && (
@@ -760,7 +773,7 @@ export default function PublicationForm({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6">
+      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-slate-200 pt-6">
         <Button
           type="submit"
           loading={submitting}

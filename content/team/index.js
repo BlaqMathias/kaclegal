@@ -1,15 +1,17 @@
 import kokoAsuquo from './koko-asuquo';
-import esiohNwokolo from './esioh-nwokolo';
-import chimaOchi from './chima-ochi';
+import donaldEssien from './donald-essien';
+import nyebukJohnson from './nyebuk-johnson';
+import helenJoseph from './helen-joseph';
 
 /**
  * @typedef {object} TeamMember
  * @property {string} slug - URL segment, e.g. 'koko-asuquo' -> /team/koko-asuquo.
  * @property {string} name - Full name (no formal title).
+ * @property {string} role - Role within KAC Legal.
  * @property {string[]} specialties - Display specialties (shown as badges; some may
  *   not have a matching practice-area page).
  * @property {string} photo - Public path to the headshot, e.g. '/images/team/koko-asuquo.webp'.
- * @property {string} bio - Biography paragraph.
+ * @property {string[]} bio - Biography paragraphs.
  * @property {string[]} practiceAreaSlugs - Slugs of real Phase 3 practice-area pages this
  *   member leads/contributes to (used for clickable cross-links).
  */
@@ -20,7 +22,7 @@ import chimaOchi from './chima-ochi';
  *
  * @type {TeamMember[]}
  */
-export const team = [kokoAsuquo, esiohNwokolo, chimaOchi];
+export const team = [kokoAsuquo, donaldEssien, nyebukJohnson, helenJoseph];
 
 /**
  * Look up a team member by slug.
