@@ -1,7 +1,7 @@
 import Badge from "@/components/ui/Badge";
 import { formatDateUTC, formatNaira } from "@/lib/publications";
-import Image from "next/image";
 import Link from "next/link";
+import { resolvePublicationImageUrl } from "@/lib/publicationImages";
 
 /**
  * PublicationCard — one item in the public publications grid.
@@ -94,12 +94,11 @@ export default function PublicationCard({ publication }) {
 
   const coverImage = imagePath ? (
     <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-offWhite">
-      <Image
-        src={imagePath}
+      <img
+        src={resolvePublicationImageUrl(imagePath)}
         alt=""
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        className="object-cover"
+        className="h-full w-full object-cover"
+        loading="lazy"
       />
     </div>
   ) : null;

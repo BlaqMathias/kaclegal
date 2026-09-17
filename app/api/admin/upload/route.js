@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi, unauthorizedBody } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import {
+  buildStorageKey,
+  PUBLICATIONS_BUCKET,
   removeUnreferencedFile,
-  uploadPublicationFile,
-  validateUpload,
 } from '@/lib/storage';
-import { formatBytes, MAX_UPLOAD_BYTES } from '@/lib/publications';
+import {
+  ALLOWED_UPLOAD_TYPES,
+  MAX_UPLOAD_BYTES,
+  UNKNOWN_UPLOAD_TYPES,
+  extensionFromFilename,
+  formatBytes,
+} from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,32 +21,12 @@ export const dynamic = 'force-dynamic';
 const STORAGE_KEY_PATTERN = /^\d{4}\/[a-f0-9-]{36}\.[a-z0-9]{2,5}$/i;
 
 /**
- * Slack above MAX_UPLOAD_BYTES for multipart framing (boundaries, headers) so a
- * file that is legitimately just under the limit isn't rejected by the envelope.
- */
-const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
-
-/**
- * POST /api/admin/upload — accept a publication file into the private bucket.
+ * POST /api/admin/upload — mint a signed upload URL for a publication file.
  *
- * Everything the browser claims about the file is re-checked here: size against
- * the 25 MB ceiling, MIME type against an allowlist, and the leading bytes
- * against the signature that type implies. The stored extension comes from the
- * allowlist and the filename is discarded entirely, so nothing user-supplied
- * reaches the storage key.
- *
- * Size is checked three times, at decreasing cost: `Content-Length` before the
- * body is read at all (a missing header is rejected outright, not skipped),
- * `file.size` before the bytes are pulled into a Buffer, and `buffer.length` — the
- * bytes actually received — inside `validateUpload`. Route handlers have no
- * default body-size cap, so without the first check a large POST would be
- * buffered into memory in full before anything got the chance to reject it.
- *
- * Returns the resulting `path`, which the admin form submits as `file_path` when
- * it saves the publication.
- *
- * @param {Request} request
- * @returns {Promise<NextResponse>}
+ * The browser uploads straight to the private Supabase `publications` bucket.
+ * That means a large PDF never has to pass through the Next.js request body,
+ * which is both more memory-efficient and safer on serverless hosts with body
+ * limits. The admin UI gets true browser upload progress from the direct upload.
  */
 export async function POST(request) {
   const user = await requireAdminApi();
@@ -47,101 +34,112 @@ export async function POST(request) {
     return NextResponse.json(unauthorizedBody(), { status: 401 });
   }
 
-  // A missing or unparseable Content-Length is rejected rather than waved through.
-  // `Number(null)` is 0 and `Number('abc')` is NaN, so a "> limit" test alone lets
-  // both past — and then `request.formData()` buffers the whole body before
-  // anything can object. Every browser and fetch() sends this header for a
-  // multipart upload, so requiring it costs a legitimate admin nothing.
-  const declaredLength = Number(request.headers.get('content-length'));
-  if (!Number.isFinite(declaredLength) || declaredLength <= 0) {
-    return NextResponse.json(
-      { ok: false, error: 'Could not read the upload. Please try again.' },
-      { status: 411 },
-    );
-  }
-
-  if (declaredLength > MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `That file is too large. The limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`,
-      },
-      { status: 413 },
-    );
-  }
-
-  /** @type {FormData} */
-  let formData;
+  let body;
   try {
-    formData = await request.formData();
+    body = await request.json();
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Could not read the upload.' },
+      { ok: false, error: 'Could not read the file details.' },
       { status: 400 },
     );
   }
 
-  const file = formData.get('file');
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const reportedType =
+    typeof body?.type === 'string' ? body.type.toLowerCase().trim() : '';
+  const size = Number(body?.size);
 
-  if (!file || typeof file === 'string' || typeof file.arrayBuffer !== 'function') {
+  if (!Number.isFinite(size) || size <= 0) {
     return NextResponse.json(
       { ok: false, error: 'No file was received.' },
       { status: 400 },
     );
   }
 
-  // Check the declared size before materialising the bytes.
-  if (typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES) {
+  if (size > MAX_UPLOAD_BYTES) {
     return NextResponse.json(
       {
         ok: false,
-        error: `That file is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`,
+        error: `That file is ${formatBytes(size)}. The app limit is ${formatBytes(MAX_UPLOAD_BYTES)}.`,
       },
       { status: 413 },
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const filenameExt = extensionFromFilename(name);
+  const mimeExt = Object.prototype.hasOwnProperty.call(
+    ALLOWED_UPLOAD_TYPES,
+    reportedType,
+  )
+    ? ALLOWED_UPLOAD_TYPES[reportedType]
+    : null;
 
-  // Validate against the real bytes, not the reported metadata.
-  const validation = validateUpload(file, buffer);
-  if (!validation.ok) {
-    return NextResponse.json({ ok: false, error: validation.error }, { status: 400 });
+  let ext = mimeExt;
+  if (!ext && UNKNOWN_UPLOAD_TYPES.includes(reportedType)) {
+    ext = filenameExt;
   }
 
-  const stored = await uploadPublicationFile({
-    buffer,
-    ext: validation.ext,
-    contentType: validation.contentType,
-  });
-
-  if (!stored.ok) {
-    return NextResponse.json({ ok: false, error: stored.error }, { status: 502 });
+  if (!ext) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Unsupported file type. Upload a PDF, EPUB, DOC or DOCX file.',
+      },
+      { status: 400 },
+    );
   }
 
-  return NextResponse.json({
-    ok: true,
-    path: stored.path,
-    size: buffer.length,
-    sizeLabel: formatBytes(buffer.length),
-    ext: validation.ext,
-  });
+  if (filenameExt && filenameExt !== ext) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'The file extension does not match the file type.',
+      },
+      { status: 400 },
+    );
+  }
+
+  const path = buildStorageKey(ext);
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.storage
+      .from(PUBLICATIONS_BUCKET)
+      .createSignedUploadUrl(path);
+
+    if (error || !data?.signedUrl) {
+      console.error('[admin/upload] Could not create signed upload URL:', error);
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            error?.message?.includes('Bucket not found')
+              ? 'The private publications bucket is missing. Run the Supabase storage setup first.'
+              : 'Could not prepare the upload. Please try again.',
+        },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      path,
+      signedUrl: data.signedUrl,
+      size,
+      sizeLabel: formatBytes(size),
+      ext,
+    });
+  } catch (error) {
+    console.error('[admin/upload] Failed:', error);
+    return NextResponse.json(
+      { ok: false, error: 'Could not prepare the upload. Please try again.' },
+      { status: 502 },
+    );
+  }
 }
 
 /**
  * DELETE /api/admin/upload?path=... — discard an uploaded file.
- *
- * The admin form uploads as soon as a file is chosen, so replacing the file
- * before saving would leave the first upload stranded in the bucket. This lets
- * the form clean up after itself.
- *
- * Only accepts keys in this route's own `YYYY/<uuid>.<ext>` format, and only
- * deletes keys no publication row points at. The format check alone would not be
- * enough: every saved publication's file matches that same format, so without the
- * reference check this endpoint could be pointed at a live publication's file.
- *
- * @param {Request} request
- * @returns {Promise<NextResponse>}
  */
 export async function DELETE(request) {
   const user = await requireAdminApi();
@@ -159,6 +157,5 @@ export async function DELETE(request) {
   }
 
   const removed = await removeUnreferencedFile(path);
-
   return NextResponse.json({ ok: true, removed });
 }

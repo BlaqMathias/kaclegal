@@ -13,6 +13,7 @@ import {
   formatBytes,
   slugify,
 } from "@/lib/publications";
+import { resolvePublicationImageUrl } from "@/lib/publicationImages";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -44,11 +45,106 @@ function textareaClasses(hasError) {
   ].join(" ");
 }
 
+
+/**
+ * Lightweight client-side signature check for publication files before a signed
+ * Storage upload is requested. The private bucket MIME allowlist is still the
+ * storage boundary; this catches obvious renamed/corrupt files early.
+ */
+async function validatePublicationFileHeader(file) {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+
+  const startsWith = (signature) =>
+    signature.every((byte, index) => bytes[index] === byte);
+
+  if (ext === "pdf" && !startsWith([0x25, 0x50, 0x44, 0x46])) {
+    return "This file does not look like a valid PDF.";
+  }
+
+  if (
+    (ext === "epub" || ext === "docx") &&
+    !startsWith([0x50, 0x4b, 0x03, 0x04])
+  ) {
+    return `This file does not look like a valid ${ext.toUpperCase()} file.`;
+  }
+
+  if (
+    ext === "doc" &&
+    !startsWith([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
+  ) {
+    return "This file does not look like a valid DOC file.";
+  }
+
+  return null;
+}
+
+/**
+ * Upload directly to a Supabase signed Storage URL while keeping browser upload
+ * progress. The file body never passes through the Next.js server.
+ */
+function uploadToSignedUrlWithProgress({
+  signedUrl,
+  file,
+  onProgress,
+  progressCeiling = 85,
+}) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", signedUrl);
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      const rawPercent = Math.round((event.loaded / event.total) * 100);
+      onProgress(
+        Math.min(
+          progressCeiling,
+          Math.round((rawPercent * progressCeiling) / 100),
+        ),
+      );
+    };
+
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.onload = () => {
+      resolve({
+        ok: xhr.status >= 200 && xhr.status < 300,
+        status: xhr.status,
+        payload: xhr.response || {},
+      });
+    };
+
+    const body = new FormData();
+    body.append("cacheControl", "3600");
+    body.append("", file);
+
+    onProgress(0);
+    xhr.send(body);
+  });
+}
+
+function UploadProgress({ value, label = "Uploading…" }) {
+  return (
+    <div className="mt-3">
+      <div className="mb-1 flex items-center justify-between gap-3 text-caption text-brand-navy">
+        <span>{label}</span>
+        <span>{value}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-brand-navy transition-all duration-150"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 /**
  * PublicationForm — shared create and edit form.
  *
  * Files (and the cover image) upload as soon as they're chosen, not on submit,
- * so a 25 MB PDF isn't re-sent every time a validation error sends the admin
+ * so a large publication file isn't re-sent every time a validation error sends the admin
  * back to the form. Each upload returns a path submitted as `file_path` /
  * `image_path` respectively.
  *
@@ -99,7 +195,10 @@ export default function PublicationForm({
   const [imageSessionUploads, setImageSessionUploads] = useState([]);
 
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(0);
+  const [imageOptimization, setImageOptimization] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -183,21 +282,54 @@ export default function PublicationForm({
       sessionUploads[sessionUploads.length - 1] ?? null;
 
     try {
-      const body = new FormData();
-      body.append("file", file);
+      const headerError = await validatePublicationFileHeader(file);
+      if (headerError) {
+        setFieldErrors((current) => ({ ...current, file: headerError }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        setUploadProgress(0);
+        setUploading(false);
+        return;
+      }
 
-      const response = await fetch("/api/admin/upload", {
+      const signResponse = await fetch("/api/admin/upload", {
         method: "POST",
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        }),
       });
-      const payload = await response.json().catch(() => ({}));
+      const payload = await signResponse.json().catch(() => ({}));
 
-      if (!response.ok || !payload.ok) {
+      if (!signResponse.ok || !payload?.ok || !payload?.signedUrl) {
         setFieldErrors((current) => ({
           ...current,
-          file: payload.error || "Could not upload that file.",
+          file: payload?.error || "Could not prepare that upload.",
         }));
         if (fileInputRef.current) fileInputRef.current.value = "";
+        setUploadProgress(0);
+        setUploading(false);
+        return;
+      }
+
+      const uploadResult = await uploadToSignedUrlWithProgress({
+        signedUrl: payload.signedUrl,
+        file,
+        onProgress: setUploadProgress,
+        progressCeiling: 100,
+      });
+
+      if (!uploadResult.ok) {
+        setFieldErrors((current) => ({
+          ...current,
+          file:
+            uploadResult.status === 413
+              ? "Supabase Storage rejected this file because it exceeds your current project or bucket file-size limit. On the Free plan, a single file can still be capped below the app's 500 MB limit."
+              : "Could not upload that file. Please try again.",
+        }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        setUploadProgress(0);
         setUploading(false);
         return;
       }
@@ -207,9 +339,9 @@ export default function PublicationForm({
         `${file.name} (${payload.sizeLabel || formatBytes(file.size)})`,
       );
       setSessionUploads((current) => [...current, payload.path]);
+      setUploadProgress(100);
       setUploading(false);
 
-      // A previous upload from this same session is now unreferenced.
       if (previousSessionUpload && previousSessionUpload !== payload.path) {
         discardUpload(previousSessionUpload);
       }
@@ -220,8 +352,10 @@ export default function PublicationForm({
         file: "Could not reach the server. Please try again.",
       }));
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setUploadProgress(0);
       setUploading(false);
     }
+
   };
 
   /**
@@ -235,6 +369,7 @@ export default function PublicationForm({
 
     setFormError("");
     clearFieldError("image_path");
+    setImageOptimization(null);
 
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       setFieldErrors((current) => ({
@@ -251,28 +386,98 @@ export default function PublicationForm({
     const previousSessionUpload =
       imageSessionUploads[imageSessionUploads.length - 1] ?? null;
 
+    let stagingPath = null;
+
     try {
-      const body = new FormData();
-      body.append("file", file);
-
-      const response = await fetch("/api/admin/upload-image", {
+      const signResponse = await fetch("/api/admin/upload-image/sign", {
         method: "POST",
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        }),
       });
-      const payload = await response.json().catch(() => ({}));
+      const signPayload = await signResponse.json().catch(() => ({}));
 
-      if (!response.ok || !payload.ok) {
+      if (!signResponse.ok || !signPayload?.ok || !signPayload?.signedUrl) {
         setFieldErrors((current) => ({
           ...current,
-          image_path: payload.error || "Could not upload that image.",
+          image_path:
+            signPayload?.error || "Could not prepare that image upload.",
         }));
         if (imageInputRef.current) imageInputRef.current.value = "";
+        setImageUploadProgress(0);
+        setUploadingImage(false);
+        return;
+      }
+
+      stagingPath = signPayload.stagingPath;
+
+      const uploadResult = await uploadToSignedUrlWithProgress({
+        signedUrl: signPayload.signedUrl,
+        file,
+        onProgress: setImageUploadProgress,
+        progressCeiling: 85,
+      });
+
+      if (!uploadResult.ok) {
+        if (stagingPath) {
+          fetch(
+            `/api/admin/upload-image?stagingPath=${encodeURIComponent(stagingPath)}`,
+            { method: "DELETE" },
+          ).catch(() => {});
+        }
+
+        setFieldErrors((current) => ({
+          ...current,
+          image_path:
+            uploadResult.status === 413
+              ? "Storage rejected that image because it is too large."
+              : "Could not upload that image. Please try again.",
+        }));
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        setImageUploadProgress(0);
+        setUploadingImage(false);
+        return;
+      }
+
+      // The original is now safely in the private staging bucket. The server
+      // validates, compresses and saves the final WebP from there.
+      setImageUploadProgress(90);
+
+      const processResponse = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stagingPath,
+          name: file.name,
+          type: file.type,
+        }),
+      });
+      const payload = await processResponse.json().catch(() => ({}));
+
+      if (!processResponse.ok || !payload?.ok) {
+        setFieldErrors((current) => ({
+          ...current,
+          image_path: payload?.error || "Could not process that image.",
+        }));
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        setImageUploadProgress(0);
         setUploadingImage(false);
         return;
       }
 
       setImagePath(payload.path);
       setImageSessionUploads((current) => [...current, payload.path]);
+      setImageOptimization({
+        originalSizeLabel:
+          payload.originalSizeLabel || formatBytes(file.size),
+        sizeLabel: payload.sizeLabel || null,
+        savedPercent:
+          typeof payload.savedPercent === "number" ? payload.savedPercent : null,
+      });
+      setImageUploadProgress(100);
       setUploadingImage(false);
 
       if (previousSessionUpload && previousSessionUpload !== payload.path) {
@@ -280,13 +485,23 @@ export default function PublicationForm({
       }
     } catch (caught) {
       console.error("[admin] Image upload failed:", caught);
+
+      if (stagingPath) {
+        fetch(
+          `/api/admin/upload-image?stagingPath=${encodeURIComponent(stagingPath)}`,
+          { method: "DELETE" },
+        ).catch(() => {});
+      }
+
       setFieldErrors((current) => ({
         ...current,
         image_path: "Could not reach the server. Please try again.",
       }));
       if (imageInputRef.current) imageInputRef.current.value = "";
+      setImageUploadProgress(0);
       setUploadingImage(false);
     }
+
   };
 
   /**
@@ -306,6 +521,7 @@ export default function PublicationForm({
 
     setFilePath(null);
     setFileLabel("");
+    setUploadProgress(0);
     setSessionUploads([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
 
@@ -324,6 +540,8 @@ export default function PublicationForm({
 
     setImagePath(null);
     setImageSessionUploads([]);
+    setImageUploadProgress(0);
+    setImageOptimization(null);
     if (imageInputRef.current) imageInputRef.current.value = "";
 
     if (uploadedThisSession) {
@@ -386,6 +604,7 @@ export default function PublicationForm({
         if (payload.imageDiscarded) {
           setImagePath(isEdit ? (publication?.image_path ?? null) : null);
           setImageSessionUploads([]);
+          setImageOptimization(null);
           if (imageInputRef.current) imageInputRef.current.value = "";
         }
 
@@ -429,6 +648,7 @@ export default function PublicationForm({
 
   const attachedFileName =
     fileLabel || (filePath ? filePath.split("/").pop() : "");
+  const imagePreviewUrl = resolvePublicationImageUrl(imagePath);
 
   return (
     <form
@@ -621,9 +841,7 @@ export default function PublicationForm({
             Stored privately — never linked publicly.
           </p>
 
-          {uploading && (
-            <p className="mt-2 text-caption text-brand-navy">Uploading…</p>
-          )}
+          {uploading && <UploadProgress value={uploadProgress} />}
 
           {!uploading && attachedFileName && (
             <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -663,11 +881,10 @@ export default function PublicationForm({
 
         <div className="flex flex-col gap-4 border border-slate-200 bg-white p-5 sm:flex-row sm:items-start">
           {imagePath && (
-            // Plain <img>, not next/image: this is an admin-only preview of a
-            // file that was just written to public/images/publicationUploads,
-            // not a performance-sensitive public page.
+            // Plain <img>, not next/image: this is an admin-only preview of the
+            // optimized WebP stored in the public publication-images bucket.
             <img
-              src={imagePath}
+              src={imagePreviewUrl}
               alt=""
               className="h-28 w-28 shrink-0 rounded-none border border-slate-200 object-cover"
             />
@@ -696,12 +913,30 @@ export default function PublicationForm({
             />
 
             <p id="image-hint" className="mt-2 text-caption text-brand-muted">
-              JPG, PNG, WEBP or GIF, up to {formatBytes(MAX_IMAGE_UPLOAD_BYTES)}
-              . Shown publicly on this publication&apos;s card. Optional.
+              JPEG, PNG, WEBP, AVIF or TIFF, up to {formatBytes(MAX_IMAGE_UPLOAD_BYTES)}. The image is resized when needed and compressed to WebP before it is saved. Optional.
             </p>
 
             {uploadingImage && (
-              <p className="mt-2 text-caption text-brand-navy">Uploading…</p>
+              <UploadProgress
+                value={imageUploadProgress}
+                label={
+                  imageUploadProgress >= 90
+                    ? "Optimizing & saving…"
+                    : "Uploading…"
+                }
+              />
+            )}
+
+            {!uploadingImage && imageOptimization && (
+              <p className="mt-2 text-caption text-brand-success">
+                Optimized to WebP: {imageOptimization.originalSizeLabel}
+                {imageOptimization.sizeLabel
+                  ? ` → ${imageOptimization.sizeLabel}`
+                  : ""}
+                {imageOptimization.savedPercent > 0
+                  ? ` (${imageOptimization.savedPercent}% smaller)`
+                  : ""}
+              </p>
             )}
 
             {!uploadingImage && imagePath && (

@@ -1,43 +1,29 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi, unauthorizedBody } from '@/lib/auth';
 import {
-  IMAGE_URL_PREFIX,
+  downloadStagedPublicationImage,
+  optimizePublicationImage,
+  removeStagedPublicationImage,
   removeUnreferencedImage,
   uploadPublicationImage,
   validateImageUpload,
 } from '@/lib/imageStorage';
-import { formatBytes, MAX_IMAGE_UPLOAD_BYTES } from '@/lib/publications';
+import { formatBytes } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Cover-image filenames are minted by this route as `<uuid>.<ext>` — nothing else is deletable. */
-const IMAGE_PATH_PATTERN = new RegExp(
-  `^${IMAGE_URL_PREFIX}/[a-f0-9-]{36}\\.[a-z0-9]{2,5}$`,
-  'i',
-);
+const FINAL_IMAGE_PATH_PATTERN = /^\d{4}\/[a-f0-9-]{36}\.webp$/i;
+const STAGING_IMAGE_PATH_PATTERN =
+  /^\d{4}\/[a-f0-9-]{36}\.(jpg|png|webp|avif|tif)$/i;
 
 /**
- * Slack above MAX_IMAGE_UPLOAD_BYTES for multipart framing (boundaries, headers) so a
- * file that is legitimately just under the limit isn't rejected by the envelope.
- */
-const MULTIPART_OVERHEAD_BYTES = 16 * 1024;
-
-/**
- * POST /api/admin/upload-image — accept a publication cover image.
+ * POST /api/admin/upload-image — process a source image that the browser already
+ * uploaded directly to the private staging bucket.
  *
- * Same shape as /api/admin/upload (the document-file route), including the
- * three-stage size check and re-validating the real bytes rather than trusting
- * the browser's reported type — see that route's docstring for the reasoning.
- * The one structural difference: this writes into `public/images/publicationUploads/`
- * on disk (see `lib/imageStorage.js`) rather than a private Supabase bucket,
- * because cover images are public — they render directly on the publications grid.
- *
- * Returns the resulting `path`, which the admin form submits as `image_path`
- * when it saves the publication.
- *
- * @param {Request} request
- * @returns {Promise<NextResponse>}
+ * The source never passes through this route's request body. The server downloads
+ * it from Supabase, validates the bytes, converts it to a resized WebP, stores the
+ * optimized public cover and then removes the private temporary source.
  */
 export async function POST(request) {
   const user = await requireAdminApi();
@@ -45,87 +31,106 @@ export async function POST(request) {
     return NextResponse.json(unauthorizedBody(), { status: 401 });
   }
 
-  const declaredLength = Number(request.headers.get('content-length'));
-  if (!Number.isFinite(declaredLength) || declaredLength <= 0) {
-    return NextResponse.json(
-      { ok: false, error: 'Could not read the upload. Please try again.' },
-      { status: 411 },
-    );
-  }
-
-  if (declaredLength > MAX_IMAGE_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `That image is too large. The limit is ${formatBytes(MAX_IMAGE_UPLOAD_BYTES)}.`,
-      },
-      { status: 413 },
-    );
-  }
-
-  /** @type {FormData} */
-  let formData;
+  let body;
   try {
-    formData = await request.formData();
+    body = await request.json();
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Could not read the upload.' },
+      { ok: false, error: 'Could not read the image processing request.' },
       { status: 400 },
     );
   }
 
-  const file = formData.get('file');
+  const stagingPath =
+    typeof body?.stagingPath === 'string' ? body.stagingPath.trim() : '';
+  const fileName = typeof body?.name === 'string' ? body.name : '';
+  const fileType = typeof body?.type === 'string' ? body.type : '';
 
-  if (!file || typeof file === 'string' || typeof file.arrayBuffer !== 'function') {
+  if (!STAGING_IMAGE_PATH_PATTERN.test(stagingPath)) {
     return NextResponse.json(
-      { ok: false, error: 'No image was received.' },
+      { ok: false, error: 'Invalid temporary image reference.' },
       { status: 400 },
     );
   }
 
-  if (typeof file.size === 'number' && file.size > MAX_IMAGE_UPLOAD_BYTES) {
+  const staged = await downloadStagedPublicationImage(stagingPath);
+  if (!staged.ok) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: `That image is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_IMAGE_UPLOAD_BYTES)}.`,
-      },
-      { status: 413 },
+      { ok: false, error: staged.error },
+      { status: 502 },
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const cleanupStaging = () => removeStagedPublicationImage(stagingPath);
 
-  const validation = validateImageUpload(file, buffer);
+  const validation = validateImageUpload(
+    {
+      size: staged.buffer.length,
+      type: fileType,
+      name: fileName,
+    },
+    staged.buffer,
+  );
+
   if (!validation.ok) {
-    return NextResponse.json({ ok: false, error: validation.error }, { status: 400 });
+    await cleanupStaging();
+    return NextResponse.json(
+      { ok: false, error: validation.error },
+      { status: 400 },
+    );
   }
 
-  const stored = await uploadPublicationImage({ buffer, ext: validation.ext });
+  const optimized = await optimizePublicationImage(staged.buffer);
+  if (!optimized.ok) {
+    await cleanupStaging();
+    return NextResponse.json(
+      { ok: false, error: optimized.error },
+      { status: 400 },
+    );
+  }
+
+  const stored = await uploadPublicationImage({
+    buffer: optimized.buffer,
+    ext: optimized.ext,
+    contentType: optimized.contentType,
+  });
+
+  await cleanupStaging();
 
   if (!stored.ok) {
-    return NextResponse.json({ ok: false, error: stored.error }, { status: 502 });
+    return NextResponse.json(
+      { ok: false, error: stored.error },
+      { status: 502 },
+    );
   }
+
+  const originalBytes = staged.buffer.length;
+  const savedBytes = Math.max(0, originalBytes - optimized.buffer.length);
+  const savedPercent =
+    originalBytes > 0 ? Math.round((savedBytes / originalBytes) * 100) : 0;
 
   return NextResponse.json({
     ok: true,
     path: stored.path,
-    size: buffer.length,
-    sizeLabel: formatBytes(buffer.length),
-    ext: validation.ext,
+    url: stored.publicUrl,
+    originalSize: originalBytes,
+    originalSizeLabel: formatBytes(originalBytes),
+    size: optimized.buffer.length,
+    sizeLabel: formatBytes(optimized.buffer.length),
+    savedBytes,
+    savedPercent,
+    width: optimized.width,
+    height: optimized.height,
+    ext: 'webp',
   });
 }
 
 /**
- * DELETE /api/admin/upload-image?path=... — discard an uploaded cover image.
+ * DELETE /api/admin/upload-image?path=... or ?stagingPath=...
  *
- * The admin form uploads as soon as an image is chosen, so replacing it before
- * saving would leave the first upload stranded on disk. This lets the form
- * clean up after itself. Only accepts paths in this route's own
- * `/images/publicationUploads/<uuid>.<ext>` format, and only deletes files no
- * publication row still points at.
- *
- * @param {Request} request
- * @returns {Promise<NextResponse>}
+ * Final images are only removed when no publication row points at them. A
+ * temporary staging object may be removed directly because it is never stored in
+ * the database.
  */
 export async function DELETE(request) {
   const user = await requireAdminApi();
@@ -133,16 +138,29 @@ export async function DELETE(request) {
     return NextResponse.json(unauthorizedBody(), { status: 401 });
   }
 
-  const path = new URL(request.url).searchParams.get('path');
+  const searchParams = new URL(request.url).searchParams;
+  const finalPath = searchParams.get('path');
+  const stagingPath = searchParams.get('stagingPath');
 
-  if (!path || !IMAGE_PATH_PATTERN.test(path)) {
+  if (stagingPath) {
+    if (!STAGING_IMAGE_PATH_PATTERN.test(stagingPath)) {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid temporary image reference.' },
+        { status: 400 },
+      );
+    }
+
+    const removed = await removeStagedPublicationImage(stagingPath);
+    return NextResponse.json({ ok: true, removed });
+  }
+
+  if (!finalPath || !FINAL_IMAGE_PATH_PATTERN.test(finalPath)) {
     return NextResponse.json(
       { ok: false, error: 'Invalid image reference.' },
       { status: 400 },
     );
   }
 
-  const removed = await removeUnreferencedImage(path);
-
+  const removed = await removeUnreferencedImage(finalPath);
   return NextResponse.json({ ok: true, removed });
 }

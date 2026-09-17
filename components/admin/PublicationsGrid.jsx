@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { resolvePublicationImageUrl } from '@/lib/publicationImages';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Badge from '@/components/ui/Badge';
@@ -189,12 +189,11 @@ function PublicationCardAdmin({
     <div className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-offWhite">
         {row.image_path ? (
-          <Image
-            src={row.image_path}
+          <img
+            src={resolvePublicationImageUrl(row.image_path)}
             alt=""
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            className="h-full w-full object-cover"
+            loading="lazy"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-caption text-brand-muted">
