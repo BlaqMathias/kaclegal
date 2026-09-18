@@ -91,8 +91,13 @@ function uploadToSignedUrlWithProgress({
 }) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", signedUrl);
-    xhr.responseType = "json";
+    xhr.open("PUT", signedUrl, true);
+    xhr.responseType = "text";
+
+    // Match Supabase Storage's uploadToSignedUrl request shape. The signed URL
+    // itself carries the short-lived upload token, so no browser auth key is
+    // exposed here.
+    xhr.setRequestHeader("x-upsert", "false");
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable) return;
@@ -105,22 +110,55 @@ function uploadToSignedUrlWithProgress({
       );
     };
 
-    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.onerror = () => reject(new Error("Network error while uploading to Storage."));
+
     xhr.onload = () => {
+      let payload = {};
+      try {
+        payload = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      } catch {
+        payload = { message: xhr.responseText || "" };
+      }
+
       resolve({
         ok: xhr.status >= 200 && xhr.status < 300,
         status: xhr.status,
-        payload: xhr.response || {},
+        payload,
       });
     };
 
     const body = new FormData();
     body.append("cacheControl", "3600");
+    // Supabase Storage's signed-upload endpoint expects the file in the unnamed
+    // multipart field. Passing a File preserves its MIME type and filename.
     body.append("", file);
 
     onProgress(0);
     xhr.send(body);
   });
+}
+
+function storageUploadErrorMessage(result, fallback) {
+  const message = String(
+    result?.payload?.message ||
+      result?.payload?.error ||
+      result?.payload?.statusCode ||
+      "",
+  ).trim();
+
+  if (result?.status === 413 || /too large|maximum.*size|payload/i.test(message)) {
+    return "This file exceeds the current 50 MB Supabase Storage limit.";
+  }
+
+  if (/mime|content.?type|media type/i.test(message)) {
+    return `Storage rejected this file type${message ? `: ${message}` : "."}`;
+  }
+
+  if (/row-level security|unauthorized|permission/i.test(message)) {
+    return "Storage permission rejected the upload. Please check the Supabase bucket setup.";
+  }
+
+  return message ? `${fallback} (${message})` : fallback;
 }
 
 function UploadProgress({ value, label = "Uploading…" }) {
@@ -175,7 +213,7 @@ export default function PublicationForm({
   const [price, setPrice] = useState(
     publication?.price_naira != null ? String(publication.price_naira) : "",
   );
-  const [status, setStatus] = useState(publication?.status ?? "draft");
+  const [status, setStatus] = useState(publication?.status ?? "published");
   const availableStatuses =
     isEdit && publication?.status === "archived"
       ? PUBLICATION_STATUSES
@@ -323,10 +361,10 @@ export default function PublicationForm({
       if (!uploadResult.ok) {
         setFieldErrors((current) => ({
           ...current,
-          file:
-            uploadResult.status === 413
-              ? "Supabase Storage rejected this file because it exceeds your current project or bucket file-size limit. On the Free plan, a single file can still be capped below the app's 500 MB limit."
-              : "Could not upload that file. Please try again.",
+          file: storageUploadErrorMessage(
+            uploadResult,
+            "Could not upload that file. Please try again.",
+          ),
         }));
         if (fileInputRef.current) fileInputRef.current.value = "";
         setUploadProgress(0);
@@ -431,10 +469,10 @@ export default function PublicationForm({
 
         setFieldErrors((current) => ({
           ...current,
-          image_path:
-            uploadResult.status === 413
-              ? "Storage rejected that image because it is too large."
-              : "Could not upload that image. Please try again.",
+          image_path: storageUploadErrorMessage(
+            uploadResult,
+            "Could not upload that image. Please try again.",
+          ),
         }));
         if (imageInputRef.current) imageInputRef.current.value = "";
         setImageUploadProgress(0);
