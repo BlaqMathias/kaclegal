@@ -14,6 +14,7 @@ import {
   slugify,
 } from "@/lib/publications";
 import { resolvePublicationImageUrl } from "@/lib/publicationImages";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -80,8 +81,8 @@ async function validatePublicationFileHeader(file) {
 }
 
 /**
- * Upload directly to a Supabase signed Storage URL while keeping browser upload
- * progress. The file body never passes through the Next.js server.
+ * Upload a cover image directly to a Supabase signed Storage URL while keeping
+ * browser upload progress. The image body never passes through the Next.js server.
  */
 function uploadToSignedUrlWithProgress({
   signedUrl,
@@ -180,7 +181,7 @@ function tusUploadErrorMessage(error) {
   }
 
   if (status === 401 || status === 403 || /unauthor|permission|signature|token/i.test(parsedMessage)) {
-    return "Supabase rejected the upload authorization. Sign in again and retry; if it continues, check the Supabase keys and bucket setup.";
+    return "Supabase rejected the upload session. Sign out and sign in again; if it continues, re-run the storage setup SQL so the publications TUS policy is present.";
   }
 
   if (status === 404 || /bucket.*not found/i.test(parsedMessage)) {
@@ -255,7 +256,7 @@ function tusRequest({ method, url, headers = {}, body = null, onProgress }) {
   });
 }
 
-async function createTusUpload({ file, prepared }) {
+async function createTusUpload({ file, prepared, accessToken, anonKey }) {
   const result = await tusRequest({
     method: "POST",
     url: prepared.endpoint,
@@ -263,7 +264,8 @@ async function createTusUpload({ file, prepared }) {
       "Tus-Resumable": "1.0.0",
       "Upload-Length": String(file.size),
       "Upload-Metadata": makeTusMetadata(prepared),
-      "x-signature": prepared.token,
+      Authorization: `Bearer ${accessToken}`,
+      apikey: anonKey,
       "x-upsert": "false",
     },
   });
@@ -278,13 +280,14 @@ async function createTusUpload({ file, prepared }) {
   return new URL(result.location, prepared.endpoint).toString();
 }
 
-async function getTusOffset({ uploadUrl, prepared }) {
+async function getTusOffset({ uploadUrl, accessToken, anonKey }) {
   const result = await tusRequest({
     method: "HEAD",
     url: uploadUrl,
     headers: {
       "Tus-Resumable": "1.0.0",
-      "x-signature": prepared.token,
+      Authorization: `Bearer ${accessToken}`,
+      apikey: anonKey,
     },
   });
 
@@ -303,7 +306,7 @@ async function getTusOffset({ uploadUrl, prepared }) {
   return offset;
 }
 
-async function patchTusChunk({ uploadUrl, prepared, chunk, offset, onProgress }) {
+async function patchTusChunk({ uploadUrl, chunk, offset, onProgress, accessToken, anonKey }) {
   const result = await tusRequest({
     method: "PATCH",
     url: uploadUrl,
@@ -311,7 +314,8 @@ async function patchTusChunk({ uploadUrl, prepared, chunk, offset, onProgress })
       "Tus-Resumable": "1.0.0",
       "Upload-Offset": String(offset),
       "Content-Type": "application/offset+octet-stream",
-      "x-signature": prepared.token,
+      Authorization: `Bearer ${accessToken}`,
+      apikey: anonKey,
     },
     body: chunk,
     onProgress,
@@ -331,17 +335,18 @@ async function patchTusChunk({ uploadUrl, prepared, chunk, offset, onProgress })
 }
 
 /**
- * Direct browser -> Supabase TUS upload with 6 MiB chunks, progress and retry.
+ * Direct browser -> Supabase TUS upload with the current admin session, 6 MiB
+ * chunks, progress and retry.
  * If a request is interrupted, HEAD asks Supabase for the last accepted byte and
  * the next PATCH continues from there instead of restarting the whole file.
  */
-async function uploadPublicationWithTus({ file, prepared, onProgress }) {
+async function uploadPublicationWithTus({ file, prepared, accessToken, anonKey, onProgress }) {
   const chunkSize = 6 * 1024 * 1024;
   const retryDelays = [0, 3000, 5000, 10000, 20000];
   let uploadUrl;
 
   try {
-    uploadUrl = await createTusUpload({ file, prepared });
+    uploadUrl = await createTusUpload({ file, prepared, accessToken, anonKey });
   } catch (error) {
     throw new Error(tusUploadErrorMessage(error));
   }
@@ -365,9 +370,10 @@ async function uploadPublicationWithTus({ file, prepared, onProgress }) {
         const baseOffset = offset;
         offset = await patchTusChunk({
           uploadUrl,
-          prepared,
           chunk: file.slice(baseOffset, Math.min(baseOffset + chunkSize, file.size), prepared.contentType),
           offset: baseOffset,
+          accessToken,
+          anonKey,
           onProgress: (loaded) => {
             const overall = baseOffset + loaded;
             const percent = Math.round((overall / file.size) * 95);
@@ -382,7 +388,7 @@ async function uploadPublicationWithTus({ file, prepared, onProgress }) {
         // Ask Supabase how much it actually accepted before retrying. This is
         // what makes the transfer resumable after a dropped connection.
         try {
-          offset = await getTusOffset({ uploadUrl, prepared });
+          offset = await getTusOffset({ uploadUrl, accessToken, anonKey });
           if (offset >= file.size) {
             completed = true;
             break;
@@ -577,15 +583,32 @@ export default function PublicationForm({
       });
       const prepared = await prepareResponse.json().catch(() => ({}));
 
-      if (!prepareResponse.ok || !prepared?.ok || !prepared?.token || !prepared?.endpoint) {
+      if (!prepareResponse.ok || !prepared?.ok || !prepared?.endpoint || !prepared?.path) {
         throw new Error(prepared?.error || "Could not prepare that upload.");
       }
 
       preparedPath = prepared.path;
 
+      // Supabase's primary TUS flow authenticates with the current user's access
+      // token. The token is only forwarded to Supabase Storage; it is never used
+      // as a client-side authorization decision.
+      const supabase = createSupabaseBrowserClient();
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (sessionError || !accessToken || !anonKey) {
+        throw new Error(
+          "Your admin session is no longer valid. Sign out, sign in again, and retry the upload.",
+        );
+      }
+
       await uploadPublicationWithTus({
         file,
         prepared,
+        accessToken,
+        anonKey,
         onProgress: setUploadProgress,
       });
 

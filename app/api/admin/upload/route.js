@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi, unauthorizedBody } from '@/lib/auth';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import {
   buildStorageKey,
   PUBLICATIONS_BUCKET,
@@ -18,8 +17,8 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Storage keys are minted by this route as `YYYY/<uuid>.<ext>` — nothing else is deletable. */
-const STORAGE_KEY_PATTERN = /^\d{4}\/[a-f0-9-]{36}\.[a-z0-9]{2,5}$/i;
+/** New keys are `<auth-user-uuid>/YYYY/<uuid>.<ext>`; legacy `YYYY/<uuid>.<ext>` keys remain deletable. */
+const STORAGE_KEY_PATTERN = /^(?:[a-f0-9-]{36}\/)?\d{4}\/[a-f0-9-]{36}\.[a-z0-9]{2,5}$/i;
 
 function resolveAllowedFile({ name, type, size }) {
   const reportedType = typeof type === 'string' ? type.toLowerCase().trim() : '';
@@ -98,9 +97,10 @@ async function readJson(request) {
 /**
  * POST /api/admin/upload
  *
- * action=prepare -> validates metadata and mints a short-lived Supabase signed
- *                   upload token for a TUS resumable upload. File bytes go
- *                   browser -> Supabase, never through Vercel.
+ * action=prepare -> validates metadata and returns a user-scoped object path for
+ *                   a TUS resumable upload. The browser authenticates directly
+ *                   to Storage with the current Supabase session token, so file
+ *                   bytes go browser -> Supabase and never through Vercel.
  * action=verify  -> checks the object that actually landed in Storage: path,
  *                   byte size and leading file signature.
  */
@@ -133,35 +133,16 @@ export async function POST(request) {
       );
     }
 
-    const path = buildStorageKey(validation.ext);
+    // Prefix new browser-uploaded objects with the verified Supabase user id.
+    // Storage RLS uses this first folder to ensure a signed-in user can only
+    // upload into their own namespace. Existing legacy paths remain supported.
+    const path = buildStorageKey(validation.ext, user.id);
 
     try {
-      const supabase = getSupabaseAdmin();
-      const { data, error } = await supabase.storage
-        .from(PUBLICATIONS_BUCKET)
-        .createSignedUploadUrl(path, { upsert: false });
-
-      if (error || !data?.token) {
-        console.error('[admin/upload] Could not create signed upload token:', error);
-        return NextResponse.json(
-          {
-            ok: false,
-            error:
-              error?.message?.includes('Bucket not found')
-                ? 'The private publications bucket is missing. Run the Supabase storage setup first.'
-                : error?.message
-                  ? `Could not prepare the upload: ${error.message}`
-                  : 'Could not prepare the upload. Please try again.',
-          },
-          { status: 502 },
-        );
-      }
-
       return NextResponse.json({
         ok: true,
-        provider: 'supabase-tus',
+        provider: 'supabase-tus-session',
         endpoint: getTusEndpoint(),
-        token: data.token,
         bucketName: PUBLICATIONS_BUCKET,
         path,
         contentType: validation.contentType,
