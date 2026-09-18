@@ -138,7 +138,7 @@ function uploadToSignedUrlWithProgress({
   });
 }
 
-function storageUploadErrorMessage(result, fallback) {
+function imageStorageUploadErrorMessage(result, fallback) {
   const message = String(
     result?.payload?.message ||
       result?.payload?.error ||
@@ -147,18 +147,260 @@ function storageUploadErrorMessage(result, fallback) {
   ).trim();
 
   if (result?.status === 413 || /too large|maximum.*size|payload/i.test(message)) {
-    return "This file exceeds the current 50 MB Supabase Storage limit.";
+    return "This image exceeds the current 20 MB Supabase Storage limit.";
   }
 
   if (/mime|content.?type|media type/i.test(message)) {
-    return `Storage rejected this file type${message ? `: ${message}` : "."}`;
+    return `Storage rejected this image type${message ? `: ${message}` : "."}`;
   }
 
   if (/row-level security|unauthorized|permission/i.test(message)) {
-    return "Storage permission rejected the upload. Please check the Supabase bucket setup.";
+    return "Storage permission rejected the image upload. Please check the Supabase bucket setup.";
   }
 
   return message ? `${fallback} (${message})` : fallback;
+}
+
+function tusUploadErrorMessage(error) {
+  const status = Number(error?.status) || null;
+  const body = String(error?.responseText || "").trim();
+
+  let parsedMessage = body;
+  if (body) {
+    try {
+      const parsed = JSON.parse(body);
+      parsedMessage = String(parsed?.message || parsed?.error || body).trim();
+    } catch {
+      // Keep the raw response body.
+    }
+  }
+
+  if (status === 413 || /too large|maximum.*size|file size/i.test(parsedMessage)) {
+    return "This file exceeds the current 50 MB Supabase Storage limit.";
+  }
+
+  if (status === 401 || status === 403 || /unauthor|permission|signature|token/i.test(parsedMessage)) {
+    return "Supabase rejected the upload authorization. Sign in again and retry; if it continues, check the Supabase keys and bucket setup.";
+  }
+
+  if (status === 404 || /bucket.*not found/i.test(parsedMessage)) {
+    return "The private publications bucket could not be found. Run the Supabase storage setup SQL again.";
+  }
+
+  if (/mime|content.?type|media type/i.test(parsedMessage)) {
+    return `Supabase rejected this publication type${parsedMessage ? `: ${parsedMessage}` : "."}`;
+  }
+
+  if (parsedMessage) return `Supabase upload failed: ${parsedMessage}`;
+  if (error?.message) return `Upload failed: ${error.message}`;
+  return "Could not upload that publication. Please try again.";
+}
+
+function encodeTusMetadataValue(value) {
+  const bytes = new TextEncoder().encode(String(value ?? ""));
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function makeTusMetadata(prepared) {
+  return [
+    ["bucketName", prepared.bucketName],
+    ["objectName", prepared.path],
+    ["contentType", prepared.contentType],
+    ["cacheControl", "3600"],
+  ]
+    .map(([key, value]) => `${key} ${encodeTusMetadataValue(value)}`)
+    .join(",");
+}
+
+function tusRequest({ method, url, headers = {}, body = null, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.responseType = "text";
+
+    Object.entries(headers).forEach(([key, value]) => {
+      xhr.setRequestHeader(key, String(value));
+    });
+
+    if (onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(event.loaded, event.total);
+      };
+    }
+
+    xhr.onerror = () => {
+      const error = new Error("Network error while uploading to Supabase Storage.");
+      error.status = 0;
+      reject(error);
+    };
+
+    xhr.ontimeout = () => {
+      const error = new Error("The Supabase upload request timed out.");
+      error.status = 0;
+      reject(error);
+    };
+
+    xhr.onload = () => {
+      resolve({
+        status: xhr.status,
+        responseText: xhr.responseText || "",
+        location: xhr.getResponseHeader("Location"),
+        uploadOffset: xhr.getResponseHeader("Upload-Offset"),
+      });
+    };
+
+    xhr.send(body);
+  });
+}
+
+async function createTusUpload({ file, prepared }) {
+  const result = await tusRequest({
+    method: "POST",
+    url: prepared.endpoint,
+    headers: {
+      "Tus-Resumable": "1.0.0",
+      "Upload-Length": String(file.size),
+      "Upload-Metadata": makeTusMetadata(prepared),
+      "x-signature": prepared.token,
+      "x-upsert": "false",
+    },
+  });
+
+  if (result.status < 200 || result.status >= 300 || !result.location) {
+    const error = new Error("Supabase could not start the resumable upload.");
+    error.status = result.status;
+    error.responseText = result.responseText;
+    throw error;
+  }
+
+  return new URL(result.location, prepared.endpoint).toString();
+}
+
+async function getTusOffset({ uploadUrl, prepared }) {
+  const result = await tusRequest({
+    method: "HEAD",
+    url: uploadUrl,
+    headers: {
+      "Tus-Resumable": "1.0.0",
+      "x-signature": prepared.token,
+    },
+  });
+
+  if (result.status < 200 || result.status >= 300) {
+    const error = new Error("Supabase could not resume the upload.");
+    error.status = result.status;
+    error.responseText = result.responseText;
+    throw error;
+  }
+
+  const offset = Number(result.uploadOffset);
+  if (!Number.isFinite(offset) || offset < 0) {
+    throw new Error("Supabase returned an invalid resumable-upload offset.");
+  }
+
+  return offset;
+}
+
+async function patchTusChunk({ uploadUrl, prepared, chunk, offset, onProgress }) {
+  const result = await tusRequest({
+    method: "PATCH",
+    url: uploadUrl,
+    headers: {
+      "Tus-Resumable": "1.0.0",
+      "Upload-Offset": String(offset),
+      "Content-Type": "application/offset+octet-stream",
+      "x-signature": prepared.token,
+    },
+    body: chunk,
+    onProgress,
+  });
+
+  if (result.status < 200 || result.status >= 300) {
+    const error = new Error("Supabase rejected a resumable upload chunk.");
+    error.status = result.status;
+    error.responseText = result.responseText;
+    throw error;
+  }
+
+  const nextOffset = Number(result.uploadOffset);
+  return Number.isFinite(nextOffset) && nextOffset >= 0
+    ? nextOffset
+    : offset + chunk.size;
+}
+
+/**
+ * Direct browser -> Supabase TUS upload with 6 MiB chunks, progress and retry.
+ * If a request is interrupted, HEAD asks Supabase for the last accepted byte and
+ * the next PATCH continues from there instead of restarting the whole file.
+ */
+async function uploadPublicationWithTus({ file, prepared, onProgress }) {
+  const chunkSize = 6 * 1024 * 1024;
+  const retryDelays = [0, 3000, 5000, 10000, 20000];
+  let uploadUrl;
+
+  try {
+    uploadUrl = await createTusUpload({ file, prepared });
+  } catch (error) {
+    throw new Error(tusUploadErrorMessage(error));
+  }
+
+  let offset = 0;
+
+  onProgress(0);
+
+  while (offset < file.size) {
+    const chunkEnd = Math.min(offset + chunkSize, file.size);
+    const chunk = file.slice(offset, chunkEnd, prepared.contentType);
+    let completed = false;
+    let lastError = null;
+
+    for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+      if (retryDelays[attempt] > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
+
+      try {
+        const baseOffset = offset;
+        offset = await patchTusChunk({
+          uploadUrl,
+          prepared,
+          chunk: file.slice(baseOffset, Math.min(baseOffset + chunkSize, file.size), prepared.contentType),
+          offset: baseOffset,
+          onProgress: (loaded) => {
+            const overall = baseOffset + loaded;
+            const percent = Math.round((overall / file.size) * 95);
+            onProgress(Math.max(0, Math.min(95, percent)));
+          },
+        });
+        completed = true;
+        break;
+      } catch (error) {
+        lastError = error;
+
+        // Ask Supabase how much it actually accepted before retrying. This is
+        // what makes the transfer resumable after a dropped connection.
+        try {
+          offset = await getTusOffset({ uploadUrl, prepared });
+          if (offset >= file.size) {
+            completed = true;
+            break;
+          }
+        } catch (resumeError) {
+          lastError = resumeError;
+        }
+      }
+    }
+
+    if (!completed) {
+      const error = new Error(tusUploadErrorMessage(lastError));
+      error.cause = lastError;
+      throw error;
+    }
+  }
+
+  return { url: uploadUrl };
 }
 
 function UploadProgress({ value, label = "Uploading…" }) {
@@ -301,9 +543,8 @@ export default function PublicationForm({
 
     setFormError("");
     clearFieldError("file");
+    setUploadProgress(0);
 
-    // Cheap client-side check so an oversized file isn't uploaded just to be
-    // rejected. The server re-checks this — it is the check that counts.
     if (file.size > MAX_UPLOAD_BYTES) {
       setFieldErrors((current) => ({
         ...current,
@@ -318,82 +559,87 @@ export default function PublicationForm({
     setUploading(true);
     const previousSessionUpload =
       sessionUploads[sessionUploads.length - 1] ?? null;
+    let preparedPath = null;
 
     try {
       const headerError = await validatePublicationFileHeader(file);
-      if (headerError) {
-        setFieldErrors((current) => ({ ...current, file: headerError }));
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        setUploadProgress(0);
-        setUploading(false);
-        return;
-      }
+      if (headerError) throw new Error(headerError);
 
-      const signResponse = await fetch("/api/admin/upload", {
+      const prepareResponse = await fetch("/api/admin/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "prepare",
           name: file.name,
           type: file.type,
           size: file.size,
         }),
       });
-      const payload = await signResponse.json().catch(() => ({}));
+      const prepared = await prepareResponse.json().catch(() => ({}));
 
-      if (!signResponse.ok || !payload?.ok || !payload?.signedUrl) {
-        setFieldErrors((current) => ({
-          ...current,
-          file: payload?.error || "Could not prepare that upload.",
-        }));
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        setUploadProgress(0);
-        setUploading(false);
-        return;
+      if (!prepareResponse.ok || !prepared?.ok || !prepared?.token || !prepared?.endpoint) {
+        throw new Error(prepared?.error || "Could not prepare that upload.");
       }
 
-      const uploadResult = await uploadToSignedUrlWithProgress({
-        signedUrl: payload.signedUrl,
+      preparedPath = prepared.path;
+
+      await uploadPublicationWithTus({
         file,
+        prepared,
         onProgress: setUploadProgress,
-        progressCeiling: 100,
       });
 
-      if (!uploadResult.ok) {
-        setFieldErrors((current) => ({
-          ...current,
-          file: storageUploadErrorMessage(
-            uploadResult,
-            "Could not upload that file. Please try again.",
-          ),
-        }));
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        setUploadProgress(0);
-        setUploading(false);
-        return;
+      // The bytes went directly to Supabase. Verify the stored size and real file
+      // signature server-side before we allow the row to reference the object.
+      setUploadProgress(97);
+      const verifyResponse = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify",
+          path: prepared.path,
+          size: file.size,
+          ext: prepared.ext,
+        }),
+      });
+      const verified = await verifyResponse.json().catch(() => ({}));
+
+      if (!verifyResponse.ok || !verified?.ok) {
+        throw new Error(verified?.error || "Supabase could not verify that upload.");
       }
 
-      setFilePath(payload.path);
+      setFilePath(verified.path);
       setFileLabel(
-        `${file.name} (${payload.sizeLabel || formatBytes(file.size)})`,
+        `${file.name} (${verified.sizeLabel || formatBytes(file.size)})`,
       );
-      setSessionUploads((current) => [...current, payload.path]);
+      setSessionUploads((current) => [...current, verified.path]);
       setUploadProgress(100);
-      setUploading(false);
 
-      if (previousSessionUpload && previousSessionUpload !== payload.path) {
+      if (previousSessionUpload && previousSessionUpload !== verified.path) {
         discardUpload(previousSessionUpload);
       }
     } catch (caught) {
-      console.error("[admin] Upload failed:", caught);
+      console.error("[admin] Publication upload failed:", caught);
+
+      // If Storage accepted the direct upload but verification or a later step
+      // failed, clean up the orphan. If the TUS upload never completed this is a
+      // harmless best-effort delete.
+      if (preparedPath) {
+        discardUpload(preparedPath);
+      }
+
       setFieldErrors((current) => ({
         ...current,
-        file: "Could not reach the server. Please try again.",
+        file:
+          caught instanceof Error && caught.message
+            ? caught.message
+            : "Could not upload that publication. Please try again.",
       }));
       if (fileInputRef.current) fileInputRef.current.value = "";
       setUploadProgress(0);
+    } finally {
       setUploading(false);
     }
-
   };
 
   /**
@@ -469,7 +715,7 @@ export default function PublicationForm({
 
         setFieldErrors((current) => ({
           ...current,
-          image_path: storageUploadErrorMessage(
+          image_path: imageStorageUploadErrorMessage(
             uploadResult,
             "Could not upload that image. Please try again.",
           ),
@@ -876,7 +1122,7 @@ export default function PublicationForm({
 
           <p id="file-hint" className="mt-2 text-caption text-brand-muted">
             PDF, EPUB, DOC or DOCX, up to {formatBytes(MAX_UPLOAD_BYTES)}.
-            Stored privately — never linked publicly.
+            Stored privately in Supabase using resumable upload — never linked publicly.
           </p>
 
           {uploading && <UploadProgress value={uploadProgress} />}
