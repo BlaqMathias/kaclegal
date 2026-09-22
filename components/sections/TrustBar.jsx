@@ -25,6 +25,7 @@ const clients = [
   { name: "Gaale Beauty", image: "gaale-beauty.webp" },
   { name: "Kaolinite Enterprise", image: "kaolinite-enterprise.webp" },
   { name: "Jite Projects", image: "jite-projects.webp" },
+  { name: "Mr. Jay Autos & Parts Dallas", image: "mr-jay-autos-parts.webp" },
 ];
 
 // Rendered twice back-to-back so the -50% marquee scroll loops seamlessly.

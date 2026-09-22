@@ -59,7 +59,7 @@ export default function HeroApproachToggle() {
       >
         <HoverImage
           src="/images/hero/kac-legal-approach.webp"
-          alt="A marble figure of Justice holding balanced golden scales"
+          alt="A judge’s gavel, legal books and scales of justice in a law library"
           tilt="right"
           className="!h-full !w-full !aspect-auto !rounded-[2rem] border-white/15"
         />
