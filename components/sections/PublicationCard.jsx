@@ -11,7 +11,8 @@ import { resolvePublicationImageUrl } from "@/lib/publicationImages";
  *   whole card is a `Link` there and the pill reads "View to purchase". It's
  *   a styled `<span>`, not a nested interactive element, since the card
  *   itself is already the link.
- * - Free items have no detail page at all — the pill IS the action: a real
+ * - Articles use an image-free card with a link to the full article text.
+ * - Other free items have no detail page at all — the pill IS the action: a real
  *   `<a>` pointing straight at the signed-download route, so clicking "Read"
  *   starts the download immediately. The rest of the card is a plain,
  *   non-interactive `<div>`.
@@ -36,6 +37,9 @@ export default function PublicationCard({ publication }) {
     created_at: createdAt,
   } = publication;
 
+  const isArticle = type === "Article";
+  const effectivePaid = !isArticle && isPaid;
+
   const arrow = (
     <svg
       className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
@@ -57,8 +61,8 @@ export default function PublicationCard({ publication }) {
     <div className="flex-1 p-6">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="navy">{type}</Badge>
-        <Badge variant={isPaid ? "muted" : "teal"}>
-          {isPaid ? formatNaira(price) : "Free"}
+        <Badge variant={effectivePaid ? "muted" : "teal"}>
+          {effectivePaid ? formatNaira(price) : "Free"}
         </Badge>
       </div>
 
@@ -71,7 +75,12 @@ export default function PublicationCard({ publication }) {
       )}
 
       <div className="mt-5">
-        {isPaid ? (
+        {isArticle ? (
+          <Link href={`/publications/${slug}`} className="inline-flex items-center gap-2 rounded-full bg-brand-navy px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-navyDark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2">
+            Read more
+            {arrow}
+          </Link>
+        ) : effectivePaid ? (
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-navyDark px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 group-hover:bg-brand-navy">
             View to purchase
             {arrow}
@@ -92,7 +101,7 @@ export default function PublicationCard({ publication }) {
     </div>
   );
 
-  const coverImage = imagePath ? (
+  const coverImage = !isArticle && imagePath ? (
     <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-offWhite">
       <img
         src={resolvePublicationImageUrl(imagePath)}
@@ -111,7 +120,7 @@ export default function PublicationCard({ publication }) {
     </div>
   );
 
-  if (isPaid) {
+  if (effectivePaid) {
     return (
       <Link
         href={`/publications/${slug}`}

@@ -47,7 +47,7 @@ export async function GET(_request, { params }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("publications")
-    .select("slug, title, is_paid, status, file_path")
+    .select("slug, title, type, is_paid, status, file_path")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -57,6 +57,12 @@ export async function GET(_request, { params }) {
       { ok: false, error: "Could not open that publication." },
       { status: 500 },
     );
+  }
+
+  if (data?.status === "published" && data.type === "Article") {
+    return NextResponse.redirect(new URL(`/publications/${data.slug}`, _request.url), {
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 
   if (!data || data.status !== "published" || data.is_paid || !data.file_path) {

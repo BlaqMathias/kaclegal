@@ -1,10 +1,11 @@
+import ArticleBody from "@/components/sections/ArticleBody";
 import Reveal from "@/components/motion/Reveal";
 import BuyButton from "@/components/sections/BuyButton";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
-import { formatNaira } from "@/lib/publications";
+import { formatDateUTC, formatNaira } from "@/lib/publications";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -28,7 +29,7 @@ async function getPublication(slug) {
     const { data, error } = await supabase
       .from("publications")
       .select(
-        "id, slug, title, type, description, is_paid, price_naira, created_at",
+        "id, slug, title, type, description, content, is_paid, price_naira, created_at",
       )
       .eq("slug", slug)
       .eq("status", "published")
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }) {
 /**
  * /publications/[slug] — a single publication.
  *
- * Paid only: free publications have no detail page. If a free item's slug is
+ * Articles render their full formatted text. Other free publications have no detail page. If a free item's slug is
  * requested directly (an old bookmark, a shared link, etc.), this redirects
  * straight to the signed-download route instead of rendering anything — the
  * download route re-validates `is_paid`/`status` itself either way.
@@ -79,6 +80,32 @@ export default async function PublicationDetailPage({ params }) {
 
   if (!publication) {
     notFound();
+  }
+
+  if (publication.type === "Article") {
+    return (
+      <>
+        <Section background="navyDarkPanel" spacing="lg">
+          <div className="mx-auto max-w-3xl">
+            <Link href="/publications" className="text-caption font-semibold text-white transition-colors hover:text-brand-ice focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-ice focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navyDark">← Back to publications</Link>
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <Badge variant="navy" className="!bg-white/10 !text-white ring-1 ring-white/20">Article</Badge>
+              <Badge variant="teal" className="!bg-brand-teal/20 !text-white ring-1 ring-brand-teal/40">Free</Badge>
+              <time dateTime={publication.created_at} className="ml-2 text-caption text-white/75">{formatDateUTC(publication.created_at)}</time>
+            </div>
+            <h1 className="mt-4 font-display text-h1 text-white [overflow-wrap:anywhere]">{publication.title}</h1>
+          </div>
+        </Section>
+        <Section background="white" spacing="md">
+          <article aria-label={publication.title} className="mx-auto max-w-3xl">
+            <ArticleBody content={publication.content} />
+            <div className="mt-12 border-t border-slate-200 pt-6">
+              <Link href="/publications" className="font-medium text-brand-navy hover:text-brand-teal">← Back to all publications</Link>
+            </div>
+          </article>
+        </Section>
+      </>
+    );
   }
 
   if (!publication.is_paid) {

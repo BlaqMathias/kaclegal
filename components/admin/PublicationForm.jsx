@@ -1,5 +1,6 @@
 "use client";
 
+import ArticleEditor from "@/components/admin/ArticleEditor";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -294,6 +295,8 @@ export default function PublicationForm({
   const [description, setDescription] = useState(
     publication?.description ?? "",
   );
+  const isArticle = type === "Article";
+  const [content, setContent] = useState(publication?.content ?? null);
   const [isPaid, setIsPaid] = useState(Boolean(publication?.is_paid));
   const [price, setPrice] = useState(
     publication?.price_naira != null ? String(publication.price_naira) : "",
@@ -708,11 +711,12 @@ export default function PublicationForm({
       title,
       type,
       description,
-      is_paid: isPaid,
-      price_naira: isPaid ? price : null,
+      content: isArticle ? content : null,
+      is_paid: isArticle ? false : isPaid,
+      price_naira: !isArticle && isPaid ? price : null,
       status,
-      file_path: filePath,
-      image_path: imagePath,
+      file_path: isArticle ? null : filePath,
+      image_path: isArticle ? null : imagePath,
     };
 
     // Slug is set at creation and immutable thereafter.
@@ -779,6 +783,12 @@ export default function PublicationForm({
         return;
       }
 
+      if (isArticle) {
+        await Promise.allSettled([
+          ...sessionUploads.map(discardUpload),
+          ...imageSessionUploads.map(discardImageUpload),
+        ]);
+      }
       router.push("/admin/publications");
       router.refresh();
     } catch (caught) {
@@ -850,7 +860,12 @@ export default function PublicationForm({
         onChange={(event) => {
           setType(event.target.value);
           clearFieldError("type");
+            clearFieldError("file");
+            clearFieldError("image_path");
+            clearFieldError("price");
+            clearFieldError("content");
         }}
+        disabled={uploading || uploadingImage || submitting}
         error={fieldErrors.type}
         wrapperClassName="[&>label]:!text-white"
       >
@@ -897,6 +912,14 @@ export default function PublicationForm({
         )}
       </div>
 
+      {isArticle && (
+        <ArticleEditor value={content} onChange={(next) => {
+          setContent(next);
+          clearFieldError("content");
+        }} error={fieldErrors.content} disabled={submitting} />
+      )}
+
+      {!isArticle && <>
       {/* Pricing */}
       <fieldset className="min-w-0">
         <legend className="mb-1.5 block w-full text-caption font-medium text-white">
@@ -1102,6 +1125,8 @@ export default function PublicationForm({
           </div>
         </div>
       </fieldset>
+
+      </>}
 
       <fieldset className="min-w-0">
         <legend className="mb-1.5 block w-full text-caption font-medium text-white">

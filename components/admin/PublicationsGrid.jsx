@@ -187,7 +187,7 @@ function PublicationCardAdmin({
 
   return (
     <div className="flex flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-card">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-offWhite">
+      {row.type !== 'Article' && <div className="relative aspect-[4/3] w-full overflow-hidden bg-brand-offWhite">
         {row.image_path ? (
           <img
             src={resolvePublicationImageUrl(row.image_path)}
@@ -200,7 +200,7 @@ function PublicationCardAdmin({
             No cover image
           </div>
         )}
-      </div>
+      </div>}
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex flex-wrap items-center gap-2">
@@ -217,12 +217,12 @@ function PublicationCardAdmin({
         <p className="mt-1 text-caption text-brand-muted">
           /publications/{row.slug}
         </p>
-        {!row.file_path && (
+        {row.type !== 'Article' && !row.file_path && (
           <p className="mt-1 text-caption text-brand-error">
             No file attached
           </p>
         )}
-        {!row.is_paid && (
+        {row.type !== 'Article' && !row.is_paid && (
           <p className="mt-1 text-caption text-brand-muted">
             {row.download_count ?? 0} download
             {row.download_count === 1 ? '' : 's'}

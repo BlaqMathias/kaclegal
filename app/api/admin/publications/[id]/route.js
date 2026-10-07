@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Columns returned to the admin UI. */
 const ADMIN_COLUMNS =
-  "id, slug, title, type, description, is_paid, price_naira, file_path, image_path, status, download_count, archived_at, created_at, updated_at";
+  "id, slug, title, type, description, content, is_paid, price_naira, file_path, image_path, status, download_count, archived_at, created_at, updated_at";
 
 /** Matches a canonical UUID, so a junk id fails fast instead of hitting Postgres. */
 const UUID_PATTERN =
