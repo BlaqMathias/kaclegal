@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { REVEAL_VARIANTS } from "@/components/motion/Reveal";
+import { motion } from "framer-motion";
 
 const EASE = [0.22, 1, 0.36, 1];
 

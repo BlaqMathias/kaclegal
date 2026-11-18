@@ -1,10 +1,10 @@
-import Link from "next/link";
 import Reveal from "@/components/motion/Reveal";
 import CtaBanner from "@/components/sections/CtaBanner";
 import PublicationsBrowser from "@/components/sections/PublicationsBrowser";
 import Section from "@/components/ui/Section";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 
 // Publications are managed through /admin and can change at any time, so this
 // page is rendered per request rather than cached at build.

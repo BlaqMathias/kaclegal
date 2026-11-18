@@ -1,12 +1,12 @@
 "use client";
 
+import Reveal from "@/components/motion/Reveal";
+import { RevealItem, RevealStagger } from "@/components/motion/RevealStagger";
 import PublicationCard from "@/components/sections/PublicationCard";
 import Button from "@/components/ui/Button";
 import Section from "@/components/ui/Section";
 import { PUBLICATION_TYPES } from "@/lib/publications";
 import { useMemo, useState } from "react";
-import Reveal from "@/components/motion/Reveal";
-import { RevealStagger, RevealItem } from "@/components/motion/RevealStagger";
 
 /** Filter pill order as requested — independent of PUBLICATION_TYPES' own order. */
 const FILTERS = [
@@ -66,7 +66,10 @@ export default function PublicationsBrowser({ publications, failed }) {
       {/* Grid — navy-dark background, holding the (filtered) publication cards. */}
       <Section background="navyDarkPanel" spacing="md">
         {filtered.length > 0 ? (
-          <RevealStagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <RevealStagger
+            amount="some"
+            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          >
             {filtered.map((publication) => (
               <RevealItem key={publication.id} variant="fadeUp">
                 <PublicationCard publication={publication} />
