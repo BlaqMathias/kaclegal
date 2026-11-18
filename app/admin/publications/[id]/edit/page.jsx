@@ -2,6 +2,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import PublicationForm from "@/components/admin/PublicationForm";
 import { requireAdminPage } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function EditPublicationPage({ params }) {
+  noStore();
+
   if (!UUID_PATTERN.test(params.id ?? "")) {
     notFound();
   }

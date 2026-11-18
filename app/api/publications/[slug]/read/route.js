@@ -1,9 +1,14 @@
 import { createSignedDownloadUrl } from "@/lib/storage";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { unstable_noStore as noStore } from "next/cache";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
 
 /**
  * How long a free-item link stays valid. Long enough to start a download,
@@ -35,12 +40,14 @@ const SIGNED_URL_TTL_SECONDS = 600;
  * @returns {Promise<NextResponse>}
  */
 export async function GET(_request, { params }) {
+  noStore();
+
   const slug = String(params?.slug ?? "").trim();
 
   if (!slug) {
     return NextResponse.json(
       { ok: false, error: "Not found." },
-      { status: 404 },
+      { status: 404, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -55,20 +62,21 @@ export async function GET(_request, { params }) {
     console.error("[api/publications/read] Lookup failed:", error);
     return NextResponse.json(
       { ok: false, error: "Could not open that publication." },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 
   if (data?.status === "published" && data.type === "Article") {
-    return NextResponse.redirect(new URL(`/publications/${data.slug}`, _request.url), {
-      headers: { "Cache-Control": "no-store" },
-    });
+    return NextResponse.redirect(
+      new URL(`/publications/${data.slug}`, _request.url),
+      { headers: NO_STORE_HEADERS },
+    );
   }
 
   if (!data || data.status !== "published" || data.is_paid || !data.file_path) {
     return NextResponse.json(
       { ok: false, error: "Not found." },
-      { status: 404 },
+      { status: 404, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -81,7 +89,7 @@ export async function GET(_request, { params }) {
   if (!signedUrl) {
     return NextResponse.json(
       { ok: false, error: "Could not open that publication." },
-      { status: 502 },
+      { status: 502, headers: NO_STORE_HEADERS },
     );
   }
 
@@ -101,6 +109,6 @@ export async function GET(_request, { params }) {
 
   return NextResponse.redirect(signedUrl, {
     // The signed URL expires, so nothing about this response may be cached.
-    headers: { "Cache-Control": "no-store" },
+    headers: NO_STORE_HEADERS,
   });
 }

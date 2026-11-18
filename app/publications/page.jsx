@@ -4,10 +4,12 @@ import CtaBanner from "@/components/sections/CtaBanner";
 import PublicationsBrowser from "@/components/sections/PublicationsBrowser";
 import Section from "@/components/ui/Section";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
+import { unstable_noStore as noStore } from "next/cache";
 
 // Publications are managed through /admin and can change at any time, so this
 // page is rendered per request rather than cached at build.
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Publications",
@@ -27,6 +29,8 @@ export const metadata = {
  * @returns {Promise<{publications: Array<Record<string, any>>, failed: boolean}>}
  */
 async function getPublishedPublications() {
+  noStore();
+
   try {
     const supabase = createSupabasePublicClient();
     const { data, error } = await supabase

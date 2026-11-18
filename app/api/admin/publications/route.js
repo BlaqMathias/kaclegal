@@ -3,6 +3,7 @@ import { removeUnreferencedImage } from "@/lib/imageStorage";
 import { normalizePublicationPayload } from "@/lib/publicationsAdmin";
 import { removeUnreferencedFile } from "@/lib/storage";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import { NextResponse } from "next/server";
 
 // Node runtime: this route uses the service-role Supabase client and Node crypto
@@ -10,6 +11,10 @@ import { NextResponse } from "next/server";
 // cookie and must never be cached.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+};
 
 /** Columns returned to the admin UI. */
 const ADMIN_COLUMNS =
@@ -24,9 +29,14 @@ const ADMIN_COLUMNS =
  * @returns {Promise<NextResponse>}
  */
 export async function GET() {
+  noStore();
+
   const user = await requireAdminApi();
   if (!user) {
-    return NextResponse.json(unauthorizedBody(), { status: 401 });
+    return NextResponse.json(unauthorizedBody(), {
+      status: 401,
+      headers: NO_STORE_HEADERS,
+    });
   }
 
   const supabase = getSupabaseAdmin();
@@ -39,11 +49,14 @@ export async function GET() {
     console.error("[api/admin/publications] List failed:", error);
     return NextResponse.json(
       { ok: false, error: "Could not load publications." },
-      { status: 500 },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 
-  return NextResponse.json({ ok: true, publications: data ?? [] });
+  return NextResponse.json(
+    { ok: true, publications: data ?? [] },
+    { headers: NO_STORE_HEADERS },
+  );
 }
 
 /**
@@ -131,6 +144,10 @@ export async function POST(request) {
       { status: 500 },
     );
   }
+
+  revalidatePath("/publications");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/team/sitemap.xml");
 
   return NextResponse.json({ ok: true, publication: data }, { status: 201 });
 }

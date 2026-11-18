@@ -1,10 +1,15 @@
 import { getPracticeAreaSlugs } from "@/content/practice-areas";
 import { getTeamSlugs } from "@/content/team";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
+import { unstable_noStore as noStore } from "next/cache";
 
 const SITE_URL = "https://www.kaclegalpractice.com";
 
+export const revalidate = 0;
+
 export default async function sitemap() {
+  noStore();
+
   const staticPages = [
     { url: SITE_URL, changeFrequency: "monthly", priority: 1 },
     { url: `${SITE_URL}/about`, changeFrequency: "yearly", priority: 0.8 },

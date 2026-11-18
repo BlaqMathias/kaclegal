@@ -3,6 +3,7 @@ import PublicationStats from "@/components/admin/PublicationStats";
 import PublicationsGrid from "@/components/admin/PublicationsGrid";
 import { requireAdminPage } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,8 @@ export const metadata = {
 };
 
 export default async function AdminPublicationsPage() {
+  noStore();
+
   const user = await requireAdminPage("/admin/publications");
   const supabase = getSupabaseAdmin();
 

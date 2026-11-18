@@ -1,6 +1,7 @@
 import { getPracticeAreaSlugs } from "@/content/practice-areas";
 import { getTeamSlugs } from "@/content/team";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
+import { unstable_noStore as noStore } from "next/cache";
 
 /**
  * The live, canonical domain. Update this in exactly one place if the domain
@@ -8,6 +9,8 @@ import { createSupabasePublicClient } from "@/lib/supabaseServer";
  * app/layout.jsx) should point here rather than hardcoding the string again.
  */
 const SITE_URL = "https://kaclegalpractice.com";
+
+export const revalidate = 0;
 
 /**
  * app/sitemap.js — a Next.js special file. Returning an array here makes
@@ -21,6 +24,8 @@ const SITE_URL = "https://kaclegalpractice.com";
  * whole sitemap over one bad request.
  */
 export default async function sitemap() {
+  noStore();
+
   const staticPages = [
     { url: SITE_URL, changeFrequency: "monthly", priority: 1 },
     { url: `${SITE_URL}/about`, changeFrequency: "yearly", priority: 0.8 },

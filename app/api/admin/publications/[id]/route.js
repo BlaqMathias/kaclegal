@@ -3,6 +3,7 @@ import { removeUnreferencedImage } from "@/lib/imageStorage";
 import { normalizePublicationPayload } from "@/lib/publicationsAdmin";
 import { removeUnreferencedFile } from "@/lib/storage";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { revalidatePath, unstable_noStore as noStore } from "next/cache";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -23,6 +24,8 @@ const UUID_PATTERN =
  * @returns {Promise<Record<string, any>|null>}
  */
 async function findPublication(id) {
+  noStore();
+
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("publications")
@@ -206,6 +209,11 @@ export async function PUT(request, { params }) {
     await removeUnreferencedImage(replacedImage);
   }
 
+  revalidatePath("/publications");
+  revalidatePath(`/publications/${data.slug}`);
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/team/sitemap.xml");
+
   return NextResponse.json({ ok: true, publication: data });
 }
 
@@ -263,6 +271,11 @@ export async function DELETE(_request, { params }) {
       );
     }
 
+    revalidatePath("/publications");
+    revalidatePath(`/publications/${existing.slug}`);
+    revalidatePath("/sitemap.xml");
+    revalidatePath("/team/sitemap.xml");
+
     return NextResponse.json({ ok: true, action: "archived" });
   }
 
@@ -281,6 +294,11 @@ export async function DELETE(_request, { params }) {
 
   await removeUnreferencedFile(existing.file_path);
   await removeUnreferencedImage(existing.image_path);
+
+  revalidatePath("/publications");
+  revalidatePath(`/publications/${existing.slug}`);
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/team/sitemap.xml");
 
   return NextResponse.json({ ok: true, action: "deleted" });
 }

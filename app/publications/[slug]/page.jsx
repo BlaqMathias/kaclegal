@@ -8,9 +8,11 @@ import Section from "@/components/ui/Section";
 import { formatDateUTC, formatNaira } from "@/lib/publications";
 import { createSupabasePublicClient } from "@/lib/supabaseServer";
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * Look up one published publication by slug.
@@ -24,6 +26,8 @@ export const dynamic = "force-dynamic";
  * @returns {Promise<Record<string, any>|null>}
  */
 async function getPublication(slug) {
+  noStore();
+
   try {
     const supabase = createSupabasePublicClient();
     const { data, error } = await supabase
